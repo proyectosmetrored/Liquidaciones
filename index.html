@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autoconsumos · Cartera pendiente</title>
+<style>
+:root{
+  --azul:#0878B8; --azul-claro:#31A5D6; --azul-suave:#F1FAFE; --azul-borde:#D9E6ED;
+  --tinta:#1B2B38; --tinta-2:#52657A; --tinta-3:#8598A8;
+  --fondo:#F4F8FA; --blanco:#FFFFFF; --linea:#E5EDF3;
+  --ok:#0E7C4A; --ok-fondo:#E4F6ED; --alerta:#C0392F; --alerta-fondo:#FDE8EA;
+  --aviso:#8A6100; --aviso-fondo:#FFF6DF; --aviso-borde:#F0DFA8;
+  --serie-1:#0878B8; --serie-2:#E7515A;
+  --sombra:0 4px 14px rgba(41,90,116,.09);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:var(--fondo);color:var(--tinta)}
+.oculto{display:none !important}
+
+/* ---------------- Encabezado ---------------- */
+.encabezado{background:linear-gradient(110deg,#30A5D7,#209BCF 55%,#0878B8);color:#fff;padding:16px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.marca{font-size:25px;font-weight:700;letter-spacing:-1px;line-height:1}
+.marca span{display:block;font-size:10px;font-weight:400;letter-spacing:2.5px}
+.encabezado h1{margin:0;font-size:18px;font-weight:700;letter-spacing:.3px;text-transform:uppercase}
+.encabezado .sub{margin:3px 0 0;font-size:12.5px;color:rgba(255,255,255,.9)}
+.encabezado .centro{flex:1;min-width:210px}
+.corte{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:7px 13px;font-size:11.5px;line-height:1.5}
+.corte b{display:block;font-size:13.5px}
+.sesion{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.quien{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:6px 14px;font-size:12.5px;font-weight:600}
+.quien i{font-style:normal;opacity:.85;font-weight:400}
+.btn-salir{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);height:32px;padding:0 14px;font-size:12.5px}
+.btn-salir:hover{background:rgba(255,255,255,.3)}
+
+.franja{display:flex;gap:10px;align-items:flex-start;padding:9px 28px;font-size:12px;border-bottom:1px solid var(--aviso-borde);background:var(--aviso-fondo);color:var(--aviso)}
+.franja b{color:#5C4100}
+.franja-demo{background:#FDE8EA;border-bottom-color:#F3B9BE;color:#8A1F17}
+.franja-demo b{color:#6B1710}
+
+.envoltura{max-width:1560px;margin:0 auto;padding:18px 28px 34px}
+
+/* ---------------- Login ---------------- */
+.login-fondo{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:linear-gradient(135deg,#0e7490,#0d9488 55%,#0878B8)}
+.login-caja{width:100%;max-width:400px;background:#fff;border-radius:16px;padding:30px 28px 26px;box-shadow:0 14px 40px rgba(0,0,0,.22)}
+.login-icono{width:62px;height:62px;border-radius:16px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;
+  font-size:29px;color:#fff;background:linear-gradient(135deg,#0878B8,#0d9488)}
+.login-caja h2{margin:0 0 6px;text-align:center;font-size:19px;color:#155e75}
+.login-caja .pista{margin:0 0 18px;text-align:center;font-size:12.5px;color:var(--tinta-2)}
+.login-caja label{display:block;font-size:12px;font-weight:700;color:#334155;margin:0 0 6px}
+.login-caja label::after{content:" *";color:var(--alerta)}
+.login-caja input{width:100%;height:46px;padding:11px 13px;border:1.5px solid #E2E8F0;border-radius:10px;font:inherit;font-size:16px;background:#fff;color:var(--tinta)}
+.login-caja input:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px rgba(8,120,184,.14)}
+.login-caja .btn-1{width:100%;height:48px;margin-top:20px;font-size:15px}
+.login-pie{margin:14px 0 0;text-align:center;font-size:11.5px;color:rgba(255,255,255,.9)}
+.login-err{margin-top:12px;padding:10px 12px;border-radius:8px;font-size:12.5px;font-weight:600;background:var(--alerta-fondo);color:var(--alerta)}
+.login-demo{margin-top:14px;padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.55;background:#FDE8EA;color:#8A1F17;border:1px solid #F3B9BE}
+
+/* Desplegable propio: se comporta igual en iPhone, Android y PC. */
+.combo{position:relative}
+.combo-lista{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:60;background:#fff;border:1.5px solid var(--azul);
+  border-radius:10px;max-height:252px;overflow:auto;box-shadow:0 8px 22px rgba(0,0,0,.17);-webkit-overflow-scrolling:touch}
+.combo-opt{padding:12px 14px;cursor:pointer;font-size:15px;border-bottom:1px solid #F1F5F9}
+.combo-opt:last-child{border-bottom:none}
+.combo-opt:active{background:#E0F2FE}
+@media(hover:hover){.combo-opt:hover{background:#E0F2FE}}
+.combo-nada{padding:12px 14px;color:var(--tinta-3);font-size:13.5px}
+
+/* ---------------- Bloques ---------------- */
+.pestanas{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--azul-borde);flex-wrap:wrap}
+.pestanas button{height:40px;padding:0 20px;border-radius:8px 8px 0 0;background:transparent;color:var(--tinta-2);font-weight:600;font-size:13.5px;border:2px solid transparent;border-bottom:none;margin-bottom:-2px}
+.pestanas button.activa{background:var(--blanco);color:var(--azul);border-color:var(--azul-borde);border-bottom:2px solid var(--blanco)}
+.pestanas button:hover:not(.activa){background:var(--azul-suave)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:14px;margin-bottom:18px}
+.kpi{background:var(--blanco);border:1px solid rgba(20,95,135,.09);border-radius:12px;padding:15px 17px;box-shadow:var(--sombra)}
+.kpi h3{margin:0;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--tinta-2)}
+.kpi p{margin:9px 0 0;font-size:25px;font-weight:700;color:var(--azul);line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .pie-kpi{margin:5px 0 0;font-size:11.5px;color:var(--tinta-3);font-variant-numeric:normal}
+.kpi.rojo p{color:var(--alerta)}
+.kpi .barra{height:4px;border-radius:3px;background:var(--linea);margin-top:9px;overflow:hidden}
+.kpi .barra i{display:block;height:100%;border-radius:3px;background:var(--azul)}
+
+.tarjeta{background:var(--blanco);border:1px solid rgba(20,95,135,.09);border-radius:12px;box-shadow:var(--sombra);padding:20px;margin-bottom:18px}
+.tarjeta > h2{margin:0 0 16px;font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--azul);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tarjeta > h2::before{content:"";width:4px;height:17px;border-radius:3px;background:linear-gradient(180deg,var(--azul-claro),var(--azul))}
+.tarjeta > h2 .extra{margin-left:auto;font-size:11.5px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--tinta-3)}
+
+.filtros{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:12px;align-items:end}
+.campo label{display:block;margin-bottom:5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tinta-2)}
+.campo select,.campo input{width:100%;height:40px;padding:8px 11px;border:1px solid #CAD9E1;border-radius:7px;background:#fff;color:var(--tinta);font:inherit;font-size:13px}
+.campo select:focus,.campo input:focus{outline:none;border-color:var(--azul-claro);box-shadow:0 0 0 3px rgba(49,165,214,.16)}
+.acciones{display:flex;gap:9px;flex-wrap:wrap}
+button{border:none;border-radius:7px;padding:0 16px;height:40px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-1{background:var(--azul);color:#fff}.btn-1:hover{background:#06679F}
+.btn-2{background:#fff;color:var(--azul);border:1px solid var(--azul-claro)}.btn-2:hover{background:var(--azul-suave)}
+.btn-peligro{background:var(--alerta);color:#fff}.btn-peligro:hover{background:#A32E25}
+button:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--azul-suave);border:1px solid var(--azul-borde);border-radius:20px;padding:4px 6px 4px 12px;font-size:11.5px;color:var(--azul)}
+.chip b{font-weight:700}
+.chip button{height:19px;width:19px;padding:0;border-radius:50%;background:var(--azul);color:#fff;font-size:12px;line-height:1}
+
+.contenedor-tabla{border:1px solid var(--azul-borde);border-radius:9px;overflow:auto;max-height:640px}
+table{border-collapse:separate;border-spacing:0;width:100%;min-width:1090px;font-size:12.5px}
+thead th{position:sticky;top:0;z-index:2;background:linear-gradient(180deg,#0E85C4,#0878B8);color:#fff;padding:10px 9px;text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+thead th.ordenable{cursor:pointer;user-select:none}
+thead th.ordenable:hover{background:#0A6FA3}
+thead th .flecha{opacity:.45;margin-left:4px}
+thead th.orden-activo .flecha{opacity:1}
+tbody td{padding:8px 9px;border-bottom:1px solid var(--linea);vertical-align:middle}
+tbody tr:hover{background:#F5FBFE}
+tbody tr.seleccionada{background:#EAF6FC}
+tbody tr.bloqueada{background:#F7FAF8}
+tbody tr.bloqueada:hover{background:#F1F7F3}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pastilla{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.p-ok{color:var(--ok);background:var(--ok-fondo)}
+.p-no{color:var(--tinta-2);background:#EEF3F7}
+.p-viejo{color:var(--alerta);background:var(--alerta-fondo)}
+.sello{display:block;margin-top:3px;font-size:10px;color:var(--tinta-3);line-height:1.35}
+.chk{width:19px;height:19px;accent-color:var(--azul);cursor:pointer}
+.obs{width:100%;min-width:170px;padding:6px 8px;border:1px solid #CAD9E1;border-radius:6px;font:inherit;font-size:12px}
+.obs.lleno{border-color:var(--azul-claro);background:var(--azul-suave)}
+.obs-fija{display:block;font-size:12px;color:var(--tinta-2);white-space:pre-wrap;word-break:break-word}
+.obs-fija.sin{color:var(--tinta-3);font-style:italic}
+.vacio{padding:38px 20px;text-align:center;color:var(--tinta-2)}
+.lote{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--azul-suave);border:1px solid var(--azul-borde);border-radius:8px;padding:10px 14px;margin-bottom:11px;font-size:12.5px}
+.lote button{height:32px;font-size:12px}
+.btn-marcar{height:28px;padding:0 11px;font-size:11.5px;background:var(--azul);color:#fff}
+.btn-marcar:hover{background:#06679F}
+
+.paginacion{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--tinta-2)}
+.paginacion .grupo{display:flex;gap:7px;align-items:center}
+.paginacion button{height:34px;padding:0 13px;font-size:12.5px}
+
+.grid-graficos{display:grid;grid-template-columns:repeat(auto-fit,minmax(370px,1fr));gap:16px}
+.grafico{background:var(--blanco);border:1px solid var(--azul-borde);border-radius:10px;padding:16px 14px 12px}
+.grafico h3{margin:0 0 3px;font-size:13px;font-weight:700;color:var(--tinta)}
+.grafico .nota{margin:0 0 12px;font-size:11.5px;color:var(--tinta-3)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.eje{fill:var(--tinta-3);font-size:10.5px}
+.eje-valor{fill:var(--tinta-2);font-size:10.5px;font-variant-numeric:tabular-nums}
+.eje-cat{fill:var(--tinta-2);font-size:11px}
+.rejilla{stroke:var(--linea);stroke-width:1}
+.base{stroke:#C3CFD9;stroke-width:1}
+.etiqueta-dato{fill:var(--tinta-2);font-size:10.5px;font-weight:600;font-variant-numeric:tabular-nums}
+.pista{fill:transparent;cursor:pointer}
+#tip{position:fixed;z-index:90;pointer-events:none;background:#12242F;color:#fff;padding:8px 11px;border-radius:7px;font-size:12px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transition:opacity .12s;max-width:280px}
+#tip b{color:#8FD3F2}
+
+/* Franja de avance. Vive arriba, antes de la tabla, porque es lo primero
+   que mira una supervisora y antes quedaba al fondo del panel lateral:
+   por debajo de 1120 px ese panel se apila debajo de la tabla y había que
+   recorrerla entera para ver cuánto llevaba gestionado. */
+.avance-barra{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:linear-gradient(90deg,#ECF8FD,#E5F5FC);border:1px solid var(--azul-borde);
+  border-radius:9px;padding:12px 16px;margin-bottom:14px}
+.avance-barra .dato{display:flex;align-items:baseline;gap:7px;padding:2px 0}
+.avance-barra .dato span{font-size:11.5px;color:var(--tinta-2);text-transform:uppercase;letter-spacing:.4px}
+.avance-barra .dato b{font-size:19px;font-variant-numeric:tabular-nums;color:var(--tinta)}
+.avance-barra .sep{width:1px;align-self:stretch;background:var(--azul-borde)}
+.avance-barra .progreso{flex:1 1 180px;min-width:140px;display:flex;align-items:center;gap:9px}
+.avance-barra .riel{flex:1;height:8px;border-radius:5px;background:#fff;
+  border:1px solid var(--azul-borde);overflow:hidden}
+.avance-barra .riel i{display:block;height:100%;background:linear-gradient(90deg,#31A5D6,#0878B8)}
+.avance-barra .pct{font-size:12.5px;font-weight:700;color:var(--azul);font-variant-numeric:tabular-nums}
+.avance-barra .acciones-arriba{display:flex;gap:9px;flex-wrap:wrap;margin-left:auto}
+.avance-barra .acciones-arriba button{height:36px;padding:0 15px;font-size:12.5px}
+.nota-regla{margin:0 0 14px;font-size:11.5px;line-height:1.55;color:var(--tinta-2)}
+
+/* ---------------- Subir respaldos ---------------- */
+.zona-pdf{border:2px dashed var(--azul-borde);border-radius:9px;background:#FBFDFE;
+  padding:16px 18px;margin-bottom:14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  transition:background .12s,border-color .12s}
+.zona-pdf.encima{border-color:var(--azul);background:var(--azul-suave)}
+.zona-pdf .texto{flex:1 1 260px;min-width:0;font-size:12.5px;color:var(--tinta-2);line-height:1.5}
+.zona-pdf .texto b{color:var(--tinta);font-size:13.5px;display:block;margin-bottom:2px}
+.zona-pdf .mono{font-size:11.5px;color:var(--tinta-3)}
+.resumen-pdf{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+.pastilla{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.p-ok{background:var(--ok-fondo);color:var(--ok)}
+.p-aviso{background:#FDF3E2;color:#8A5A12}
+.p-mal{background:var(--alerta-fondo);color:var(--alerta)}
+.adjunto{color:var(--azul);text-decoration:none;font-size:13px}
+.adjunto:hover{text-decoration:underline}
+@media (max-width:560px){.avance-barra .sep{display:none}
+  .avance-barra .acciones-arriba{margin-left:0;width:100%}
+  .avance-barra .acciones-arriba button{flex:1}}
+.mensaje{margin-top:12px;padding:10px 12px;border-radius:7px;font-size:12.5px;font-weight:600}
+.m-ok{background:var(--ok-fondo);color:var(--ok)}
+.m-error{background:var(--alerta-fondo);color:var(--alerta)}
+.tabla-simple{width:100%;min-width:0;font-size:12.5px;border-collapse:collapse}
+.tabla-simple th{background:none;color:var(--tinta-2);position:static;text-align:left;padding:7px 8px;border-bottom:2px solid var(--linea);font-size:10.5px;text-transform:uppercase;letter-spacing:.4px}
+.tabla-simple td{padding:7px 8px;border-bottom:1px solid var(--linea)}
+.pie{background:linear-gradient(100deg,#31A5D6,#0878B8);color:#fff;padding:14px 28px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:11.5px}
+
+/* ---------------- Carga ---------------- */
+.cargando{padding:70px 20px;text-align:center;color:var(--tinta-2)}
+.girador{width:38px;height:38px;margin:0 auto 16px;border:3px solid var(--azul-borde);border-top-color:var(--azul);border-radius:50%;animation:girar .8s linear infinite}
+@keyframes girar{to{transform:rotate(360deg)}}
+
+/* ---------------- Confirmación irreversible ---------------- */
+.velo{position:fixed;inset:0;z-index:100;background:rgba(12,32,45,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{width:100%;max-width:540px;background:#fff;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.3);overflow:hidden}
+.modal-cabeza{padding:17px 22px;background:var(--alerta-fondo);border-bottom:1px solid #F3B9BE}
+.modal-cabeza h3{margin:0;font-size:16px;color:var(--alerta);display:flex;align-items:center;gap:9px}
+.modal-cuerpo{padding:20px 22px;font-size:13.5px;line-height:1.6}
+.modal-cuerpo p{margin:0 0 12px}
+.modal-lista{max-height:190px;overflow:auto;border:1px solid var(--linea);border-radius:8px;background:#FAFCFD;font-size:12px}
+.modal-lista div{padding:7px 11px;border-bottom:1px solid var(--linea)}
+.modal-lista div:last-child{border-bottom:none}
+.modal-lista b{font-variant-numeric:tabular-nums}
+.modal-lista span{display:block;color:var(--tinta-2);font-size:11.5px;margin-top:2px}
+.modal-lista span.sin{color:var(--tinta-3);font-style:italic}
+.subrayado{border-left:3px solid var(--alerta);background:var(--alerta-fondo);padding:10px 13px;border-radius:0 7px 7px 0;color:#8A1F17;font-weight:600;margin:0 0 14px}
+.modal-pie{padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.campo-obs{display:block;margin:14px 0 5px;font-size:12px;font-weight:700;color:var(--tinta-2)}
+.campo-obs i{font-weight:400;font-style:normal;color:var(--tinta-3)}
+.obs-modal{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--azul-borde);
+  border-radius:7px;font:inherit;font-size:13px;color:var(--tinta);resize:vertical;background:#fff}
+.obs-modal:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px var(--azul-suave)}
+
+@media (max-width:640px){.envoltura,.encabezado,.franja,.pie{padding-left:14px;padding-right:14px}}
+@media print{.filtros,.acciones,.acciones-arriba,.paginacion,.franja,.pestanas,.lote,.sesion{display:none}.contenedor-tabla{max-height:none}}
+</style>
+</head>
+<body>
+
+<!-- ==================== PANTALLA 1 · ACCESO ==================== -->
+<div id="vLogin" class="login-fondo">
+  <div style="width:100%;max-width:400px">
+    <div class="login-caja">
+      <div class="login-icono">🏥</div>
+      <h2>Autoconsumos</h2>
+      <p class="pista">Elige tu centro y escribe la contraseña.</p>
+
+      <label for="centro">Centro médico</label>
+      <input id="centro" autocomplete="off" placeholder="🔎 Escribe o elige tu centro">
+
+      <label for="clave" style="margin-top:14px">Contraseña</label>
+      <input id="clave" type="password" autocomplete="off" placeholder="Contraseña del centro">
+
+      <button class="btn-1" id="btnEntrar">Entrar</button>
+      <div id="loginErr" class="login-err oculto"></div>
+      <div id="loginDemo" class="login-demo oculto"></div>
+    </div>
+    <p class="login-pie">Cada centro entra con su propia contraseña y ve únicamente su cartera.</p>
+  </div>
+</div>
+
+<!-- ==================== PANTALLA 2 · TABLERO ==================== -->
+<div id="vApp" class="oculto">
+
+<header class="encabezado">
+  <div class="marca">Metrored<span>CENTROS MÉDICOS</span></div>
+  <div class="centro">
+    <h1>Autoconsumos · Cartera pendiente</h1>
+    <p class="sub">Facturas no liquidadas · consulta y registro de gestión</p>
+  </div>
+  <div class="corte">Archivo actualizado al<b id="fechaCorte">—</b><span id="fechaConsulta"></span></div>
+  <div class="sesion">
+    <span class="quien" id="quien">—</span>
+    <button class="btn-salir" id="btnSalir">Salir</button>
+  </div>
+</header>
+
+<div class="franja franja-demo oculto" id="franjaDemo">
+  <span>⚠</span>
+  <div><b>MODO DEMOSTRACIÓN.</b> Los datos son inventados y nada se guarda en SharePoint.
+  Para pasar a producción, poner <code>MODO_DEMO: true</code> y completar las tres URL en el bloque CONFIG.</div>
+</div>
+
+<div class="franja">
+  <span>⚠</span>
+  <div><b>Información interna confidencial.</b> El marcado de una factura queda registrado con el centro,
+  la fecha y la hora, y <b>no se puede deshacer</b>.</div>
+</div>
+
+<!-- Mientras llegan los datos -->
+<div id="pantallaCarga" class="cargando">
+  <div class="girador"></div>
+  <p id="textoCarga">Consultando la cartera…</p>
+</div>
+
+<div class="envoltura oculto" id="cuerpoApp">
+
+  <section class="tarjeta" style="padding-bottom:14px">
+    <h2>Filtros <span class="extra">Los indicadores y los gráficos responden a lo que filtre aquí</span></h2>
+    <div class="filtros">
+      <div class="campo"><label for="fBusqueda">Buscar</label>
+        <input type="text" id="fBusqueda" placeholder="Factura, convenio, caja…" autocomplete="off"></div>
+      <div class="campo oculto" id="campoCentro"><label for="fCentro">Centro</label><select id="fCentro"></select></div>
+      <div class="campo"><label for="fMes">Mes de emisión</label><select id="fMes"></select></div>
+      <div class="campo"><label for="fPlan">Plan / Convenio</label><select id="fPlan"></select></div>
+      <div class="campo"><label for="fAntiguedad">Antigüedad del saldo</label><select id="fAntiguedad">
+        <option value="">Cualquiera</option><option value="0">Hasta 30 días</option>
+        <option value="1">31 a 60 días</option><option value="2">61 a 90 días</option>
+        <option value="3">Más de 90 días</option></select></div>
+      <div class="campo"><label for="fSeguimiento">Gestión</label><select id="fSeguimiento">
+        <option value="">Todas</option><option value="si">Ya marcadas</option>
+        <option value="no">Sin marcar</option></select></div>
+      <div class="campo"><label>&nbsp;</label>
+        <div class="acciones">
+          <button class="btn-2" id="btnLimpiar">Limpiar</button>
+          <button class="btn-2" id="btnRecargar" title="Volver a consultar el Excel">↻</button>
+        </div></div>
+    </div>
+    <div class="chips" id="chips"></div>
+  </section>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="avance-barra" id="avanceBarra">
+    <div class="dato"><span>Pendientes</span><b id="cTotal">0</b></div>
+    <div class="sep"></div>
+    <div class="dato"><span>Ya marcadas</span><b id="cMarcadas">0</b></div>
+    <div class="sep"></div>
+    <div class="dato"><span>Sin marcar</span><b id="cSinMarcar">0</b></div>
+    <div class="sep"></div>
+    <div class="progreso">
+      <div class="riel"><i id="cRiel" style="width:0%"></i></div>
+      <span class="pct" id="cPct">0%</span>
+    </div>
+    <div class="acciones-arriba" id="panelDescargas">
+      <button class="btn-1" id="btnExportarFiltro">Descargar lo filtrado</button>
+      <button class="btn-2" id="btnExportarTodo">Descargar toda mi cartera</button>
+    </div>
+  </section>
+
+  <!-- Subir respaldos. El nombre del archivo lleva el número de factura,
+       así que no hace falta abrir el PDF ni ninguna librería externa. -->
+  <div class="zona-pdf" id="zonaPdf">
+    <div class="texto">
+      <b>Adjuntar respaldos en PDF</b>
+      Arrastra los archivos aquí o elígelos. Cada PDF debe llamarse con el número de
+      factura — <span class="mono">013-111-000024730.pdf</span>. Las facturas reconocidas
+      se marcan de forma definitiva.
+    </div>
+    <input type="file" id="archivosPdf" accept="application/pdf,.pdf" multiple hidden>
+    <button class="btn-1" id="btnElegirPdf">Elegir archivos…</button>
+    <div class="resumen-pdf" id="resumenPdf"></div>
+  </div>
+
+  <div id="mensajePanel"></div>
+
+  <p class="nota-regla"><b>El marcado es compartido.</b> Lo que registra un centro lo ven todos
+  de inmediato: queda guardado en SharePoint, no en este navegador. Por eso mismo
+  <b>no se puede corregir ni borrar</b> — revise antes de confirmar.</p>
+
+  <div class="pestanas" id="pestanas">
+    <button class="activa" data-vista="detalle">Detalle de facturas</button>
+    <button data-vista="analisis">Análisis</button>
+  </div>
+
+  <!-- ============ DETALLE ============ -->
+  <div id="vistaDetalle">
+        <section class="tarjeta">
+          <h2>Detalle <span class="extra" id="resumenTabla">—</span></h2>
+
+          <div class="lote" id="barraLote" style="display:none">
+            <b id="loteConteo">0 seleccionadas</b>
+            <button class="btn-1" id="btnLoteMarcar">Registrar marcado…</button>
+            <button class="btn-2" id="btnLoteObs">Anotar en todas…</button>
+            <button class="btn-2" id="btnLoteLimpiar">Deseleccionar</button>
+          </div>
+
+          <div class="contenedor-tabla">
+            <table>
+              <thead><tr>
+                <th style="width:34px"><input type="checkbox" class="chk" id="chkTodas" title="Seleccionar las de esta página"></th>
+                <th class="ordenable" data-col="c">Centro <span class="flecha">↕</span></th>
+                <th class="ordenable" data-col="f">Número factura <span class="flecha">↕</span></th>
+                <th class="ordenable" data-col="d">Fecha <span class="flecha">↕</span></th>
+                <th>Caja</th>
+                <th class="ordenable" data-col="p">Plan / Convenio <span class="flecha">↕</span></th>
+                <th class="ordenable num" data-col="v">Valor <span class="flecha">↕</span></th>
+                <th class="ordenable num" data-col="s">Saldo <span class="flecha">↕</span></th>
+                <th class="ordenable" data-col="dias">Antigüedad <span class="flecha">↕</span></th>
+                <th style="width:112px">Gestión</th>
+                <th>Observación</th>
+              </tr></thead>
+              <tbody id="cuerpoTabla"></tbody>
+            </table>
+          </div>
+
+          <div class="paginacion">
+            <div id="infoPagina">—</div>
+            <div class="grupo">
+              <button class="btn-2" id="btnPrimera">« Primera</button>
+              <button class="btn-2" id="btnAnterior">‹ Anterior</button>
+              <span id="numPagina" class="mono">—</span>
+              <button class="btn-2" id="btnSiguiente">Siguiente ›</button>
+              <button class="btn-2" id="btnUltima">Última »</button>
+            </div>
+          </div>
+        </section>
+  </div>
+
+  <!-- ============ ANÁLISIS ============ -->
+  <div id="vistaAnalisis" class="oculto">
+    <section class="tarjeta">
+      <h2>Evolución mensual <span class="extra">Según los filtros aplicados</span></h2>
+      <div class="grid-graficos">
+        <div class="grafico">
+          <h3>Monto pendiente por liquidar</h3>
+          <p class="nota">Saldo acumulado, por mes de emisión de la factura</p>
+          <div id="g1"></div>
+        </div>
+        <div class="grafico">
+          <h3>Facturas pendientes</h3>
+          <p class="nota">Cantidad de documentos, por mes de emisión</p>
+          <div id="g2"></div>
+        </div>
+        <div class="grafico">
+          <h3>Antigüedad del saldo</h3>
+          <p class="nota">Días transcurridos desde la emisión hasta la fecha del archivo</p>
+          <div id="gAging"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Dónde está el pendiente</h2>
+      <div class="grid-graficos">
+        <div class="grafico" id="cajaCentros">
+          <h3>Pendiente por centro</h3>
+          <p class="nota">Saldo no liquidado acumulado</p>
+          <div id="gCentros"></div>
+        </div>
+        <div class="grafico">
+          <h3>Pendiente por plan / convenio</h3>
+          <p class="nota">Los diez convenios con mayor saldo</p>
+          <div id="gPlanes"></div>
+        </div>
+        <div class="grafico">
+          <h3>Avance de gestión</h3>
+          <p class="nota">Facturas marcadas frente a las que aún no lo están</p>
+          <div id="gAvance"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tarjeta" id="tarjetaCentros">
+      <h2>Resumen por centro <span class="extra">Ordenado por saldo pendiente</span></h2>
+      <div style="overflow:auto">
+        <table class="tabla-simple" id="tablaCentros"></table>
+      </div>
+    </section>
+  </div>
+
+</div>
+
+<footer class="pie">
+  <div><b>Metrored</b> · Centros Médicos</div>
+  <div id="pieCorte">—</div>
+  <div>Uso interno · Autoconsumos</div>
+</footer>
+
+</div>
+
+<div id="tip"></div>
+<div id="zonaModal"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   AUTOCONSUMOS · CARTERA PENDIENTE
+   -------------------------------------------------------------------
+   Este archivo NO contiene datos. Al abrirlo solo hay una pantalla de
+   acceso. Después de validar el centro contra SharePoint, los datos se
+   piden a un flujo de Power Automate que devuelve únicamente las filas
+   que ese centro tiene permitido ver.
+
+   El marcado de una factura se guarda en una lista de SharePoint, es
+   visible para todos y es IRREVERSIBLE: se registra una sola vez, con
+   el centro, la fecha y la hora.
+
+   ▶ LO ÚNICO QUE HAY QUE CAMBIAR ES EL BLOQUE CONFIG.
+   ===================================================================== */
+
+const CONFIG = {
+
+  /* (1) Flujo «Autoconsumos - Verificar acceso».
+         Recibe {centro, contrasena} y responde
+         {ok, centro, rol, token, expira}.                              */
+  VERIFICAR_URL: "",
+
+  /* (2) Flujo «Autoconsumos - Obtener datos».
+         Recibe {token} y responde {ok, centro, rol, corte, filas, marcas}. */
+  DATOS_URL: "",
+
+  /* (3) Flujo «Autoconsumos - Marcar facturas».
+         Recibe {token, facturas:[{factura, observacion}]} y responde
+         {ok, grabadas, rechazadas}.                                    */
+  MARCAR_URL: "",
+
+  /* (3b) Flujo «Autoconsumos - Subir respaldo».
+          Recibe {token, archivos:[{factura, nombre, contenido}]} donde
+          contenido es el PDF en base64, y responde {ok, grabadas, rechazadas}.
+          Si se deja vacío, el tablero oculta la zona de adjuntos.      */
+  SUBIR_URL: "",
+
+  /* (3b bis) Raíz del sitio de SharePoint. Solo se usa para armar el
+          enlace del PDF cuando el flujo devuelve una ruta relativa.     */
+  SITIO_SHAREPOINT: "https://metroredec.sharepoint.com/sites/Autoconsumos",
+
+  /* (3b ter) Nombre de la lista donde vive el registro de gestión. Se usa
+          para armar el enlace al PDF adjunto de cada fila.             */
+  LISTA_SEGUIMIENTO: "AutoconsumosSeguimiento",
+
+  /* (3c) Tope por archivo y por lote, en megabytes. Power Automate
+          rechaza cuerpos muy grandes y la espera se vuelve eterna.     */
+  MB_POR_ARCHIVO: 8,
+  MB_POR_LOTE: 25,
+
+  /* (4) Flujo opcional que devuelve la lista de centros para el
+         desplegable. Si se deja vacío, se usa CENTROS_RESPALDO.        */
+  CATALOGOS_URL: "",
+
+  /* (5) Respaldo del desplegable de centros.                           */
+  CENTROS_RESPALDO: [
+    "CM ALBORADA","CM AMAZONAS","CM CALDERÓN","CM CARCELÉN","CM CAROLINA",
+    "CM CHILLOS","CM CIUDAD CELESTE","CM CONDADO","CM CUMBAYA",
+    "CM KENNEDY","CM QUICENTRO SUR"
+  ],
+
+  /* (6) Nombre con el que se guarda la sesión. Cámbielo si publica otra
+         aplicación en el mismo sitio, para que no se pisen.            */
+  SESION_KEY: "autoconsumos_sesion_v1",
+
+  /* (7) true = permite recorrer el tablero con datos inventados, sin
+         flujos y sin escribir nada. Debe quedar en false en producción. */
+  MODO_DEMO: true
+};
+
+/* =====================================================================
+   DE AQUÍ PARA ABAJO NO HACE FALTA TOCAR NADA
+   ===================================================================== */
+
+/* ========================= Utilidades ========================= */
+const $ = id => document.getElementById(id);
+const dinero  = n => "$" + (Number(n)||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const entero  = n => (Number(n)||0).toLocaleString("es-EC");
+const compacto = n => { n = Number(n)||0;
+  if (Math.abs(n) >= 1000000) return "$" + (n/1000000).toFixed(1).replace(".0","") + " M";
+  if (Math.abs(n) >= 1000)    return "$" + Math.round(n/1000) + " K";
+  return "$" + n.toFixed(0); };
+const fechaLarga = iso => iso ? iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4) : "";
+const MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const mesCorto = ym => MESES[Number(ym.slice(5,7))-1] + " " + ym.slice(2,4);
+const esc = v => String(v==null?"":v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+
+/* Sello de tiempo legible a partir de una fecha ISO del servidor. */
+function selloLegible(iso){
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (isNaN(t)) return String(iso);
+  const f = new Date(t);
+  const dd = String(f.getDate()).padStart(2,"0"), mm = String(f.getMonth()+1).padStart(2,"0");
+  const hh = String(f.getHours()).padStart(2,"0"), mi = String(f.getMinutes()).padStart(2,"0");
+  return dd + "/" + mm + "/" + f.getFullYear() + " " + hh + ":" + mi;
+}
+
+/* ========================= Estado de la sesión ========================= */
+let SESION = null;              // {centro, rol, token, expira}
+let FECHA_CORTE = "—";          // fecha del archivo de origen, no del reloj local
+let CORTE_MS = 0;
+let DATOS = [];                 // filas normalizadas
+let MARCAS = {};                // {FACTURA: {centro, obs, por, en}}
+const BORRADORES = {};          // observaciones escritas y todavía no confirmadas
+const esAdmin = () => SESION && SESION.rol === "ADMIN";
+
+/* ========================= Normalización de columnas =========================
+   El flujo entrega las filas tal como vienen del Excel. Aquí se reconocen
+   las columnas por su nombre, con tolerancia a mayúsculas, tildes y a los
+   nombres alternativos que ha tenido la base. Si mañana renombran una
+   columna, basta con agregar el nombre nuevo a esta lista.               */
+const ALIAS = {
+  c: ["c","centro","centro medico","centro médico","sucursal"],
+  f: ["f","numero factura","número factura","factura","nro factura","no factura","documento","num factura"],
+  d: ["d","fecha","fecha emision","fecha emisión","fecha factura"],
+  u: ["u","caja","user caja","usuario caja","usuario","cajero"],
+  p: ["p","plan | convenio","plan convenio","plan","convenio","plan/convenio"],
+  v: ["v","valor","valor total","total","valor factura"],
+  s: ["s","saldo","saldo pendiente","pendiente","valor pendiente"]
+};
+const normalizar = t => String(t||"").trim().toLowerCase()
+  .normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ");
+
+function aIso(texto){
+  if (texto instanceof Date) return texto.toISOString().slice(0,10);
+  const t = String(texto||"").trim();
+  if (!t) return "";
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0,10);
+  /* Número de serie de Excel: días desde el 30/12/1899. */
+  if (/^\d{5}(\.\d+)?$/.test(t)){
+    const base = Date.UTC(1899,11,30) + Math.floor(Number(t)) * 86400000;
+    return new Date(base).toISOString().slice(0,10);
+  }
+  const partes = t.split(/[\/\-.]/);
+  if (partes.length >= 3){
+    let [d,m,a] = partes;
+    if (a.length === 2) a = "20" + a;
+    return a + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+  }
+  return "";
+}
+function aNumero(texto){
+  if (typeof texto === "number") return texto;
+  let t = String(texto||"").replace(/[$\s]/g,"");
+  if (/,\d{1,2}$/.test(t)) t = t.replace(/\./g,"").replace(",",".");   // 1.234,56
+  else t = t.replace(/,/g,"");                                          // 1,234.56
+  const n = parseFloat(t);
+  return isNaN(n) ? 0 : n;
+}
+
+function normalizarFilas(filas){
+  if (!Array.isArray(filas) || !filas.length) return [];
+  const cabeceras = Object.keys(filas[0]);
+  const mapa = {};
+  Object.keys(ALIAS).forEach(campo => {
+    const hallada = cabeceras.find(h => ALIAS[campo].includes(normalizar(h)));
+    if (hallada) mapa[campo] = hallada;
+  });
+  const nombres = {c:"Centro", f:"Número factura", d:"Fecha", v:"Valor", s:"Saldo"};
+  const faltan = ["c","f","d","v","s"].filter(k => !mapa[k]);
+  if (faltan.length){
+    throw new Error("Al archivo de origen le faltan columnas: " +
+      faltan.map(k => nombres[k]).join(", ") + ". Columnas recibidas: " + cabeceras.join(", "));
+  }
+  return filas.map(fila => ({
+    c: String(fila[mapa.c] ?? "").trim(),
+    f: String(fila[mapa.f] ?? "").trim().toUpperCase().replace(/\.0$/,""),
+    d: aIso(fila[mapa.d]),
+    u: mapa.u ? String(fila[mapa.u] ?? "").trim() : "",
+    p: mapa.p ? String(fila[mapa.p] ?? "").trim() : "",
+    v: aNumero(fila[mapa.v]),
+    s: aNumero(fila[mapa.s])
+  })).filter(r => r.f);
+}
+
+/* ========================= Antigüedad =========================
+   Se mide contra la fecha del archivo de origen, no contra el reloj del
+   equipo: así todos ven el mismo número aunque abran el tablero en días
+   distintos.                                                            */
+const MS_DIA = 86400000;
+const TRAMOS = ["Hasta 30 días","31 a 60 días","61 a 90 días","Más de 90 días"];
+function calcularAntiguedad(){
+  CORTE_MS = Date.parse(FECHA_CORTE.split("/").reverse().join("-") + "T00:00:00") || Date.now();
+  DATOS.forEach(r => {
+    r.dias  = r.d ? Math.max(0, Math.round((CORTE_MS - Date.parse(r.d + "T00:00:00")) / MS_DIA)) : 0;
+    r.tramo = r.dias <= 30 ? 0 : r.dias <= 60 ? 1 : r.dias <= 90 ? 2 : 3;
+  });
+}
+
+/* ========================= Llamadas a los flujos ========================= */
+async function llamar(url, cuerpo, intentos){
+  intentos = intentos || 3;
+  let ultimo = null;
+  for (let i = 0; i < intentos; i++){
+    try {
+      const r = await fetch(url, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(cuerpo)
+      });
+      return await r.json();
+    } catch(e){ ultimo = e; }
+  }
+  throw ultimo || new Error("No se pudo conectar.");
+}
+
+/* Si el flujo responde que la sesión ya no vale, se sale de inmediato. */
+function sesionCaida(respuesta){
+  if (respuesta && respuesta.ok === false && respuesta.motivo === "sesion"){
+    salir("Tu sesión expiró. Vuelve a entrar.");
+    return true;
+  }
+  return false;
+}
+
+/* ========================= Sesión ========================= */
+function guardarSesion(s){
+  try { sessionStorage.setItem(CONFIG.SESION_KEY, JSON.stringify(s)); } catch(e){}
+}
+function leerSesion(){
+  try {
+    const s = JSON.parse(sessionStorage.getItem(CONFIG.SESION_KEY) || "null");
+    if (!s || !s.token) return null;
+    if (s.expira && Date.parse(s.expira) < Date.now()) return null;
+    return s;
+  } catch(e){ return null; }
+}
+function borrarSesion(){
+  try { sessionStorage.removeItem(CONFIG.SESION_KEY); } catch(e){}
+}
+
+function salir(motivo){
+  SESION = null; DATOS = []; MARCAS = {}; seleccion.clear();
+  borrarSesion();
+  $("vApp").classList.add("oculto");
+  $("vLogin").classList.remove("oculto");
+  $("clave").value = "";
+  if (motivo) errorLogin(motivo); else $("loginErr").classList.add("oculto");
+}
+
+function errorLogin(texto){
+  const e = $("loginErr");
+  e.textContent = texto;
+  e.classList.remove("oculto");
+}
+
+/* ========================= Acceso ========================= */
+async function entrar(){
+  const centro = $("centro").value.trim();
+  const clave  = $("clave").value;
+  $("loginErr").classList.add("oculto");
+
+  if (!centro || !clave){
+    errorLogin("Elige tu centro y escribe la contraseña.");
+    return;
+  }
+
+  const btn = $("btnEntrar");
+  btn.disabled = true; btn.textContent = "Verificando…";
+
+  let data = null;
+  try {
+    data = CONFIG.MODO_DEMO ? demoVerificar(centro, clave)
+                            : await llamar(CONFIG.VERIFICAR_URL, {centro: centro, contrasena: clave});
+  } catch(e){
+    btn.disabled = false; btn.textContent = "Entrar";
+    errorLogin("No se pudo conectar. Revisa tu internet e inténtalo de nuevo.");
+    return;
+  }
+
+  btn.disabled = false; btn.textContent = "Entrar";
+
+  if (!data || !data.ok){
+    errorLogin("Centro o contraseña incorrectos.");
+    $("clave").value = "";
+    return;
+  }
+
+  /* La contraseña no se guarda en ningún lado: a partir de aquí solo
+     viaja el token que emitió el flujo. */
+  $("clave").value = "";
+  SESION = {centro: data.centro || centro, rol: data.rol || "CENTRO",
+            token: data.token, expira: data.expira || ""};
+  guardarSesion(SESION);
+  await abrirApp();
+}
+
+async function abrirApp(){
+  $("vLogin").classList.add("oculto");
+  $("vApp").classList.remove("oculto");
+  $("franjaDemo").classList.toggle("oculto", !CONFIG.MODO_DEMO);
+  $("quien").innerHTML = "📍 " + esc(SESION.centro) +
+    (esAdmin() ? ' <i>· todos los centros</i>' : "");
+  /* Una supervisora de centro ve solo consultar y registrar: los filtros,
+     la tabla y el marcado. Sin indicadores, sin análisis y sin descargas.
+     Todo eso queda reservado a quien entra con rol ADMIN. */
+  const admin = esAdmin();
+  $("campoCentro").classList.toggle("oculto", !admin);
+  $("tarjetaCentros").classList.toggle("oculto", !admin);
+  $("cajaCentros").classList.toggle("oculto", !admin);
+  $("kpis").classList.toggle("oculto", !admin);
+  $("pestanas").classList.toggle("oculto", !admin);
+  $("panelDescargas").classList.toggle("oculto", !admin);
+  /* Adjuntar respaldos lo pueden hacer los dos roles. La zona solo
+     aparece si existe el flujo que los recibe. */
+  $("zonaPdf").classList.toggle("oculto", !CONFIG.SUBIR_URL);
+  if (!admin){
+    $("vistaDetalle").classList.remove("oculto");
+    $("vistaAnalisis").classList.add("oculto");
+  }
+  await cargarDatos();
+}
+
+/* ========================= Carga de datos ========================= */
+async function cargarDatos(){
+  $("pantallaCarga").classList.remove("oculto");
+  $("cuerpoApp").classList.add("oculto");
+  $("textoCarga").textContent = "Consultando la cartera…";
+
+  let data;
+  try {
+    data = CONFIG.MODO_DEMO ? demoDatos() : await llamar(CONFIG.DATOS_URL, {token: SESION.token});
+  } catch(e){
+    $("textoCarga").innerHTML = '<span style="color:var(--alerta)">No se pudo consultar el origen de datos.</span>' +
+      '<br><br><button class="btn-1" onclick="cargarDatos()">Reintentar</button>';
+    return;
+  }
+
+  if (sesionCaida(data)) return;
+  if (!data || !data.ok){
+    $("textoCarga").innerHTML = '<span style="color:var(--alerta)">' +
+      esc((data && data.mensaje) || "El origen de datos respondió con un error.") + "</span>" +
+      '<br><br><button class="btn-1" onclick="cargarDatos()">Reintentar</button>';
+    return;
+  }
+
+  try {
+    DATOS = normalizarFilas(data.filas || []);
+  } catch(e){
+    $("textoCarga").innerHTML = '<span style="color:var(--alerta)">' + esc(e.message) + "</span>";
+    return;
+  }
+
+  MARCAS = {};
+  (data.marcas || []).forEach(m => {
+    const f = String(m.factura || m.Title || "").trim().toUpperCase();
+    if (f) MARCAS[f] = {centro: m.centro || "", obs: m.observacion || "",
+                        por: m.marcadoPor || m.centro || "", en: m.marcadoEn || "",
+                        pdf: enlaceRespaldo(m.id, m.respaldo)};
+  });
+
+  FECHA_CORTE = data.corte || "—";
+  calcularAntiguedad();
+  $("fechaCorte").textContent = FECHA_CORTE;
+  $("fechaConsulta").textContent = data.consultado ? "consultado " + selloLegible(data.consultado) : "";
+  $("pieCorte").textContent = "Origen: " + (data.origen || "Excel en SharePoint") + " · corte " + FECHA_CORTE;
+
+  inicializarFiltros();
+  $("pantallaCarga").classList.add("oculto");
+  $("cuerpoApp").classList.remove("oculto");
+  aplicar();
+  actualizarContadores();
+}
+
+/* ========================= Filtros ========================= */
+const POR_PAGINA = 100;
+const CAMPOS = ["fBusqueda","fCentro","fMes","fPlan","fAntiguedad","fSeguimiento"];
+const ETIQUETAS = {fBusqueda:"Búsqueda", fCentro:"Centro", fMes:"Mes",
+                   fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Gestión"};
+const CLAVE_FILTROS = "autoconsumos.filtros.v3";
+let filtrados = [], pagina = 1, orden = {col:"dias", asc:false};
+const seleccion = new Set();
+
+const unicos = campo => [...new Set(DATOS.map(r => r[campo]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+function llenar(id, valores, todos, formato){
+  const s = $(id); s.innerHTML = '<option value="">' + todos + "</option>";
+  valores.forEach(v => { const o = document.createElement("option"); o.value = v;
+    o.textContent = formato ? formato(v) : v; s.appendChild(o); });
+}
+function inicializarFiltros(){
+  llenar("fCentro", unicos("c"), "Todos los centros");
+  llenar("fPlan",   unicos("p"), "Todos los planes");
+  const meses = [...new Set(DATOS.map(r => r.d.slice(0,7)).filter(Boolean))].sort();
+  llenar("fMes", meses, "Todos los meses",
+    ym => mesCorto(ym).replace(/^./,c=>c.toUpperCase()) + " (" + ym.slice(0,4) + ")");
+  try {
+    const guardados = JSON.parse(localStorage.getItem(CLAVE_FILTROS) || "{}");
+    CAMPOS.forEach(id => {
+      if (guardados[id] == null) return;
+      const el = $(id);
+      /* Solo se restaura si la opción sigue existiendo en estos datos. */
+      if (el.tagName === "SELECT" && guardados[id] &&
+          ![...el.options].some(o => o.value === guardados[id])) return;
+      el.value = guardados[id];
+    });
+  } catch(e){}
+}
+function guardarFiltros(){
+  const estado = {}; CAMPOS.forEach(id => estado[id] = $(id).value);
+  try { localStorage.setItem(CLAVE_FILTROS, JSON.stringify(estado)); } catch(e){}
+}
+
+function aplicar(){
+  const texto  = $("fBusqueda").value.trim().toUpperCase();
+  const centro = $("fCentro").value, mes = $("fMes").value;
+  const plan   = $("fPlan").value, tramo = $("fAntiguedad").value, seg = $("fSeguimiento").value;
+  filtrados = DATOS.filter(r => {
+    if (texto && !(r.f.toUpperCase().includes(texto) || r.p.toUpperCase().includes(texto) || r.u.toUpperCase().includes(texto))) return false;
+    if (centro && r.c !== centro) return false;
+    if (plan   && r.p !== plan)   return false;
+    if (mes    && r.d.slice(0,7) !== mes) return false;
+    if (tramo !== "" && String(r.tramo) !== tramo) return false;
+    if (seg === "si" && !MARCAS[r.f]) return false;
+    if (seg === "no" &&  MARCAS[r.f]) return false;
+    return true;
+  });
+  ordenar();
+  pagina = 1;
+  guardarFiltros();
+  pintarChips();
+  pintarKpis();
+  pintarTabla();
+  pintarAnalisis();
+}
+
+function pintarChips(){
+  const activos = CAMPOS.filter(id => !$(id).closest(".campo").classList.contains("oculto") && $(id).value).map(id => {
+    const el = $(id);
+    /* Si el valor ya no corresponde a ninguna opción, selectedIndex es -1.
+       En ese caso se muestra el valor crudo en lugar de romper la página. */
+    const opcion = el.tagName === "SELECT" ? el.options[el.selectedIndex] : null;
+    const texto = opcion ? opcion.textContent : el.value;
+    return '<span class="chip">' + ETIQUETAS[id] + ': <b>' + esc(texto) + "</b>" +
+           '<button data-limpiar="' + id + '" title="Quitar">×</button></span>';
+  });
+  $("chips").innerHTML = activos.length
+    ? activos.join("") + '<span class="chip" style="background:#fff"><b>' + entero(filtrados.length) + "</b> resultado(s)</span>"
+    : "";
+}
+
+function ordenar(){
+  const c = orden.col, signo = orden.asc ? 1 : -1;
+  filtrados.sort((a,b) => {
+    const x = a[c], y = b[c];
+    if (typeof x === "number") return (x - y) * signo;
+    return String(x).localeCompare(String(y), "es") * signo;
+  });
+}
+
+/* ========================= Indicadores ========================= */
+function pintarKpis(){
+  if (!esAdmin()) return;              // los centros no ven indicadores
+  const total = filtrados.length;
+  const pend  = filtrados.reduce((a,r) => a + r.s, 0);
+  const valor = filtrados.reduce((a,r) => a + r.v, 0);
+  const viejo = filtrados.filter(r => r.tramo === 3).reduce((a,r)=>a+r.s,0);
+  const marcadas = filtrados.filter(r => MARCAS[r.f]).length;
+  const pct = total ? marcadas/total*100 : 0;
+  const dias = total ? filtrados.reduce((a,r)=>a+r.dias,0)/total : 0;
+  const filtrando = total !== DATOS.length;
+
+  const tarjetas = [
+    ["Facturas pendientes", entero(total),
+      filtrando ? "de " + entero(DATOS.length) + " en total" : "Toda la cartera cargada", false, null],
+    ["Saldo pendiente", dinero(pend),
+      "Valor facturado " + dinero(valor), false, null],
+    ["Pendiente > 90 días", dinero(viejo),
+      pend ? (viejo/pend*100).toFixed(1) + "% del pendiente" : "Sin pendiente", true, null],
+    ["Antigüedad promedio", Math.round(dias) + " días",
+      "Desde la emisión hasta el corte", dias > 90, null],
+    ["Gestión registrada", entero(marcadas),
+      pct.toFixed(1) + "% de lo consultado", false, pct]
+  ];
+  $("kpis").innerHTML = tarjetas.map(([t,v,p,rojo,barra]) =>
+    '<article class="kpi' + (rojo?" rojo":"") + '"><h3>' + t + "</h3><p>" + v + '</p><p class="pie-kpi">' + p + "</p>" +
+    (barra != null ? '<div class="barra"><i style="width:' + barra.toFixed(1) + '%"></i></div>' : "") + "</article>").join("");
+}
+
+function actualizarContadores(){
+  const marcadas = DATOS.filter(r => MARCAS[r.f]).length;
+  $("cTotal").textContent     = entero(DATOS.length);
+  $("cMarcadas").textContent  = entero(marcadas);
+  $("cSinMarcar").textContent = entero(DATOS.length - marcadas);
+  /* Sobre la cartera completa, no sobre lo filtrado: el avance de una
+     supervisora no cambia porque acote la vista a un convenio. */
+  const pct = DATOS.length ? marcadas / DATOS.length * 100 : 0;
+  $("cRiel").style.width  = pct.toFixed(1) + "%";
+  $("cPct").textContent   = pct.toFixed(pct && pct < 10 ? 1 : 0) + "%";
+}
+
+function avisoPanel(texto, ok){
+  $("mensajePanel").innerHTML = '<div class="mensaje ' + (ok?"m-ok":"m-error") + '">' + esc(texto) + "</div>";
+  setTimeout(() => { const m = $("mensajePanel"); if (m) m.innerHTML = ""; }, 9000);
+}
+
+/* ========================= Tabla ========================= */
+function pintarTabla(){
+  const total = filtrados.length;
+  const paginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+  if (pagina > paginas) pagina = paginas;
+  const desde = (pagina-1) * POR_PAGINA;
+  const trozo = filtrados.slice(desde, desde + POR_PAGINA);
+
+  $("resumenTabla").innerHTML = entero(total) + " factura(s) · saldo " +
+    dinero(filtrados.reduce((a,r)=>a+r.s,0));
+
+  if (!total){
+    $("cuerpoTabla").innerHTML = '<tr><td colspan="11" class="vacio">No se encontraron facturas con los filtros aplicados.</td></tr>';
+  } else {
+    $("cuerpoTabla").innerHTML = trozo.map(r => {
+      const marca = MARCAS[r.f], sel = seleccion.has(r.f);
+      const clase = marca ? " class=\"bloqueada\"" : (sel ? ' class="seleccionada"' : "");
+      const pastillaEdad = r.tramo === 3 ? "p-viejo" : "p-no";
+
+      /* El respaldo se abre en otra pestaña; SharePoint pide la sesión
+         del usuario, así que quien no tenga permiso no lo verá. */
+      const adjunto = marca && marca.pdf
+        ? ' <a class="adjunto" href="' + esc(marca.pdf) + '" target="_blank" ' +
+          'rel="noopener noreferrer" title="Ver el respaldo en PDF">📎</a>' : "";
+
+      const celdaGestion = marca
+        ? '<span class="pastilla p-ok">🔒 Marcada</span>' + adjunto +
+          '<span class="sello">' + esc(marca.por || marca.centro) +
+          (marca.en ? "<br>" + esc(selloLegible(marca.en)) : "") + "</span>"
+        : '<button class="btn-marcar" data-marcar="' + esc(r.f) + '">Marcar</button>';
+
+      const celdaObs = marca
+        ? '<span class="obs-fija' + (marca.obs ? "" : " sin") + '">' + esc(marca.obs || "Sin observación") + "</span>"
+        : '<input type="text" class="obs' + (BORRADORES[r.f] ? " lleno" : "") + '" data-obs="' + esc(r.f) +
+          '" value="' + esc(BORRADORES[r.f] || "") + '" placeholder="Anotar antes de marcar…" maxlength="300">';
+
+      return "<tr" + clase + ">" +
+        '<td>' + (marca ? "" :
+          '<input type="checkbox" class="chk sel" data-sel="' + esc(r.f) + '"' + (sel?" checked":"") + ">") + "</td>" +
+        "<td>" + esc(r.c) + "</td>" +
+        '<td class="mono">' + esc(r.f) + "</td>" +
+        '<td class="mono">' + fechaLarga(r.d) + "</td>" +
+        "<td>" + esc(r.u) + "</td>" +
+        "<td>" + esc(r.p) + "</td>" +
+        '<td class="num">' + dinero(r.v) + "</td>" +
+        '<td class="num">' + dinero(r.s) + "</td>" +
+        '<td><span class="pastilla ' + pastillaEdad + '">' + entero(r.dias) + " días</span></td>" +
+        "<td>" + celdaGestion + "</td>" +
+        "<td>" + celdaObs + "</td>" +
+      "</tr>";
+    }).join("");
+  }
+
+  const marcables = trozo.filter(r => !MARCAS[r.f]);
+  $("chkTodas").checked  = marcables.length > 0 && marcables.every(r => seleccion.has(r.f));
+  $("chkTodas").disabled = marcables.length === 0;
+  $("infoPagina").innerHTML = total
+    ? "Mostrando <b>" + entero(desde+1) + "</b>–<b>" + entero(Math.min(desde+POR_PAGINA,total)) + "</b> de <b>" + entero(total) + "</b>"
+    : "Sin resultados";
+  $("numPagina").textContent = pagina + " / " + paginas;
+  $("btnPrimera").disabled = $("btnAnterior").disabled = (pagina <= 1);
+  $("btnUltima").disabled  = $("btnSiguiente").disabled = (pagina >= paginas);
+  pintarLote();
+  document.querySelectorAll("thead th.ordenable").forEach(th => {
+    const activo = th.dataset.col === orden.col;
+    th.classList.toggle("orden-activo", activo);
+    th.querySelector(".flecha").textContent = activo ? (orden.asc ? "↑" : "↓") : "↕";
+  });
+}
+
+function pintarLote(){
+  const n = seleccion.size;
+  $("barraLote").style.display = n ? "flex" : "none";
+  $("loteConteo").textContent = entero(n) + " seleccionada(s)";
+}
+
+function conectarTabla(){
+  const cuerpo = $("cuerpoTabla");
+  cuerpo.addEventListener("change", ev => {
+    const el = ev.target;
+    if (el.dataset.sel){
+      const f = el.dataset.sel;
+      if (el.checked) seleccion.add(f); else seleccion.delete(f);
+      el.closest("tr").classList.toggle("seleccionada", el.checked);
+      pintarLote();
+    } else if (el.dataset.obs){
+      const f = el.dataset.obs, texto = el.value.trim();
+      if (texto) BORRADORES[f] = texto; else delete BORRADORES[f];
+      el.classList.toggle("lleno", !!texto);
+    }
+  });
+  cuerpo.addEventListener("click", ev => {
+    const b = ev.target.closest("[data-marcar]");
+    if (b) pedirConfirmacion([b.dataset.marcar]);
+  });
+  document.querySelectorAll("thead th.ordenable").forEach(th => th.onclick = () => {
+    const col = th.dataset.col;
+    orden = {col, asc: orden.col === col ? !orden.asc : true};
+    ordenar(); pintarTabla();
+  });
+  $("chkTodas").onchange = ev => {
+    const desde = (pagina-1)*POR_PAGINA;
+    filtrados.slice(desde, desde+POR_PAGINA)
+      .filter(r => !MARCAS[r.f])
+      .forEach(r => ev.target.checked ? seleccion.add(r.f) : seleccion.delete(r.f));
+    pintarTabla();
+  };
+  $("chips").addEventListener("click", ev => {
+    const id = ev.target.dataset.limpiar;
+    if (id){ $(id).value = ""; aplicar(); }
+  });
+}
+
+/* ========================= Marcado irreversible ========================= */
+function cerrarModal(){ $("zonaModal").innerHTML = ""; }
+
+function pedirConfirmacion(facturas){
+  /* Nunca se reenvía algo que ya está marcado. */
+  const nuevas = facturas.filter(f => !MARCAS[f]);
+  if (!nuevas.length){ avisoPanel("Esas facturas ya estaban marcadas.", false); return; }
+
+  const filas = nuevas.map(f => {
+    const obs = BORRADORES[f] || "";
+    return "<div><b>" + esc(f) + "</b>" +
+      '<span class="' + (obs ? "" : "sin") + '">' + esc(obs || "sin observación") + "</span></div>";
+  }).join("");
+
+  $("zonaModal").innerHTML =
+    '<div class="velo" id="velo"><div class="modal">' +
+      '<div class="modal-cabeza"><h3>⚠ Marcado definitivo</h3></div>' +
+      '<div class="modal-cuerpo">' +
+        '<p class="subrayado">Esta acción no se puede deshacer. Una vez registrada, ni tú ni ' +
+        'Tecnología pueden cambiarla ni borrarla.</p>' +
+        "<p>Se registrará a nombre de <b>" + esc(SESION.centro) + "</b>, con la fecha y la hora del servidor, " +
+        "y quedará visible para todos los centros.</p>" +
+        "<p><b>" + entero(nuevas.length) + "</b> factura(s):</p>" +
+        '<div class="modal-lista">' + filas + "</div>" +
+      "</div>" +
+      '<div class="modal-pie">' +
+        '<button class="btn-2" id="btnCancelarMarca">Cancelar</button>' +
+        '<button class="btn-peligro" id="btnConfirmarMarca">Sí, marcar definitivamente</button>' +
+      "</div>" +
+    "</div></div>";
+
+  $("btnCancelarMarca").onclick = cerrarModal;
+  $("velo").addEventListener("click", ev => { if (ev.target.id === "velo") cerrarModal(); });
+  $("btnConfirmarMarca").onclick = () => confirmarMarca(nuevas);
+}
+
+async function confirmarMarca(facturas){
+  const btn = $("btnConfirmarMarca");
+  btn.disabled = true; btn.textContent = "Registrando…";
+  $("btnCancelarMarca").disabled = true;
+
+  const carga = facturas.map(f => ({factura: f, observacion: BORRADORES[f] || ""}));
+
+  let data;
+  try {
+    data = CONFIG.MODO_DEMO ? demoMarcar(carga)
+                            : await llamar(CONFIG.MARCAR_URL, {token: SESION.token, facturas: carga}, 2);
+  } catch(e){
+    btn.disabled = false; btn.textContent = "Sí, marcar definitivamente";
+    $("btnCancelarMarca").disabled = false;
+    avisoPanel("No se pudo registrar: falló la conexión. No se marcó ninguna factura.", false);
+    cerrarModal();
+    return;
+  }
+
+  cerrarModal();
+  if (sesionCaida(data)) return;
+
+  if (!data || !data.ok){
+    avisoPanel((data && data.mensaje) || "El servidor rechazó el registro. No se marcó ninguna factura.", false);
+    return;
+  }
+
+  (data.grabadas || []).forEach(g => {
+    const f = String(g.factura || "").trim().toUpperCase();
+    if (!f) return;
+    MARCAS[f] = {centro: g.centro || SESION.centro, obs: g.observacion || BORRADORES[f] || "",
+                 por: g.marcadoPor || g.centro || SESION.centro, en: g.marcadoEn || ""};
+    delete BORRADORES[f];
+    seleccion.delete(f);
+  });
+
+  /* Una factura puede haber sido marcada por otra persona entre que se
+     abrió la pantalla y se confirmó. El servidor manda quién la tiene. */
+  const rechazadas = data.rechazadas || [];
+  rechazadas.forEach(x => {
+    const f = String(x.factura || "").trim().toUpperCase();
+    if (!f) return;
+    if (x.motivo === "ya_marcada"){
+      MARCAS[f] = {centro: x.centro || "", obs: x.observacion || "",
+                   por: x.marcadoPor || x.centro || "", en: x.marcadoEn || ""};
+    }
+    seleccion.delete(f);
+  });
+
+  const n = (data.grabadas || []).length;
+  if (n && rechazadas.length)
+    avisoPanel("Se registraron " + entero(n) + " factura(s). " + entero(rechazadas.length) +
+               " ya estaban marcadas por otra persona.", true);
+  else if (n)
+    avisoPanel("Se registraron " + entero(n) + " factura(s) de forma definitiva.", true);
+  else
+    avisoPanel("No se registró ninguna: ya estaban marcadas.", false);
+
+  actualizarContadores();
+  aplicar();
+}
+
+/* ===================== Respaldos en PDF =====================
+   El número de factura se saca del NOMBRE del archivo, no de su
+   contenido: los PDF llegan como 013-111-000024730.pdf. Así no hace
+   falta ninguna librería externa y la coincidencia es exacta, sin los
+   errores de lectura que tendría interpretar el PDF.
+
+   Regla de oro: nunca se marca una suposición. Si el nombre no trae el
+   número, o el número no está en la cartera de quien subió el archivo,
+   o aparece repetido en el lote, ese PDF no se envía — se informa y la
+   persona decide. Con un marcado irreversible, equivocarse de factura
+   es peor que no marcar.                                              */
+
+/* El (?!\d) evita quedarse con los nueve primeros dígitos de un bloque
+   más largo y dar por buena una factura que no es. */
+/* SharePoint devuelve unas veces la URL completa y otras solo la ruta
+   dentro del sitio, según qué campo se use al armar el flujo. Se acepta
+   cualquiera de las dos para no depender de ese detalle. */
+/* El PDF va adjunto al propio elemento de la lista, y esa dirección depende
+   del identificador que SharePoint asigna al crear la fila. Se arma aquí en
+   vez de guardarla: escribirla en la fila obligaría a modificarla después de
+   creada, y ninguna acción de los flujos modifica un registro de gestión.
+
+   La columna Respaldo guarda solo el nombre del archivo. */
+function enlaceRespaldo(id, archivo){
+  const a = String(archivo || "").trim();
+  if (!a || !id) return "";
+  if (/^https?:\/\//i.test(a)) return a;     // por si algún día llegara completa
+  return CONFIG.SITIO_SHAREPOINT.replace(/\/+$/, "") +
+         "/Lists/" + encodeURIComponent(CONFIG.LISTA_SEGUIMIENTO) +
+         "/Attachments/" + encodeURIComponent(id) +
+         "/" + encodeURIComponent(a);
+}
+
+const PATRON_FACTURA = /(\d{3})-(\d{3})-(\d{1,9})(?!\d)/g;
+
+function facturaDeNombre(nombre){
+  const sinExt = String(nombre || "").replace(/\.pdf$/i, "");
+  PATRON_FACTURA.lastIndex = 0;
+  const hallados = new Set();
+  let m;
+  while ((m = PATRON_FACTURA.exec(sinExt)) !== null){
+    /* Pegado a más dígitos por la izquierda: es parte de otro número. */
+    const antes = m.index > 0 ? sinExt.charAt(m.index - 1) : "";
+    if (/\d/.test(antes)) continue;
+    /* El tercer bloque se rellena a nueve dígitos: hay sistemas que
+       exportan 24730 donde la base guarda 000024730. */
+    hallados.add(m[1] + "-" + m[2] + "-" + m[3].padStart(9, "0"));
+  }
+  /* Dos facturas distintas en un mismo nombre es ambiguo, y con un
+     marcado irreversible la ambigüedad se resuelve a mano, no a ojo. */
+  return hallados.size === 1 ? hallados.values().next().value : "";
+}
+
+function leerBase64(archivo){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload  = () => { const s = String(fr.result); resolve(s.slice(s.indexOf(",") + 1)); };
+    fr.onerror = () => reject(new Error("No se pudo leer " + archivo.name));
+    fr.readAsDataURL(archivo);
+  });
+}
+
+/* Reparte los archivos en cuatro grupos según qué se puede hacer con ellos. */
+function clasificarPdf(lista){
+  const enCartera = new Set(DATOS.map(r => r.f));
+  const vistas = new Set();
+  const listos = [], repetidos = [], yaMarcados = [], fuera = [], sinNumero = [], pesados = [];
+
+  lista.forEach(a => {
+    if (a.size > CONFIG.MB_POR_ARCHIVO * 1024 * 1024){ pesados.push({a: a}); return; }
+    const f = facturaDeNombre(a.name);
+    if (!f){ sinNumero.push({a: a}); return; }
+    if (vistas.has(f)){ repetidos.push({a: a, f: f}); return; }
+    vistas.add(f);
+    if (MARCAS[f]){ yaMarcados.push({a: a, f: f}); return; }
+    if (!enCartera.has(f)){ fuera.push({a: a, f: f}); return; }
+    listos.push({a: a, f: f});
+  });
+
+  return {listos: listos, repetidos: repetidos, yaMarcados: yaMarcados,
+          fuera: fuera, sinNumero: sinNumero, pesados: pesados};
+}
+
+function recibirPdf(lista){
+  const archivos = Array.from(lista || []).filter(a => /\.pdf$/i.test(a.name));
+  if (!archivos.length){ avisoPanel("Solo se aceptan archivos PDF.", false); return; }
+
+  const g = clasificarPdf(archivos);
+  const mb = g.listos.reduce((t, x) => t + x.a.size, 0) / 1024 / 1024;
+
+  if (mb > CONFIG.MB_POR_LOTE){
+    avisoPanel("El lote pesa " + mb.toFixed(1) + " MB y el tope es " + CONFIG.MB_POR_LOTE +
+               " MB. Súbelos en tandas más pequeñas.", false);
+    return;
+  }
+  if (!g.listos.length){
+    avisoPanel("Ninguno de los " + entero(archivos.length) + " archivos se pudo asociar a una " +
+               "factura pendiente de tu cartera.", false);
+    pintarResumenPdf(g);
+    return;
+  }
+  pedirConfirmacionPdf(g);
+}
+
+function pintarResumenPdf(g){
+  const p = [];
+  if (g.listos.length)     p.push('<span class="pastilla p-ok">' + entero(g.listos.length) + " se marcarán</span>");
+  if (g.yaMarcados.length) p.push('<span class="pastilla p-aviso">' + entero(g.yaMarcados.length) + " ya estaban marcadas</span>");
+  if (g.fuera.length)      p.push('<span class="pastilla p-mal">' + entero(g.fuera.length) + " no están en tu cartera</span>");
+  if (g.repetidos.length)  p.push('<span class="pastilla p-aviso">' + entero(g.repetidos.length) + " repetidas en el lote</span>");
+  if (g.sinNumero.length)  p.push('<span class="pastilla p-mal">' + entero(g.sinNumero.length) + " sin número en el nombre</span>");
+  if (g.pesados.length)    p.push('<span class="pastilla p-mal">' + entero(g.pesados.length) + " demasiado grandes</span>");
+  const caja = $("resumenPdf");
+  if (caja) caja.innerHTML = p.join("");
+}
+
+function pedirConfirmacionPdf(g){
+  const filas = g.listos.map(x =>
+    "<div><b>" + esc(x.f) + '</b><span>' + esc(x.a.name) + " · " +
+    (x.a.size/1024).toFixed(0) + " KB</span></div>").join("");
+
+  const descartados = [].concat(
+    g.yaMarcados.map(x => [x.a.name, "ya marcada por " + ((MARCAS[x.f]||{}).por || "otro centro")]),
+    g.fuera.map(x      => [x.a.name, "la factura " + x.f + " no está en tu cartera"]),
+    g.repetidos.map(x  => [x.a.name, "otro archivo del lote ya trae " + x.f]),
+    g.sinNumero.map(x  => [x.a.name, "el nombre no contiene un número de factura"]),
+    g.pesados.map(x    => [x.a.name, "pesa más de " + CONFIG.MB_POR_ARCHIVO + " MB"])
+  );
+
+  const bloqueDescartados = descartados.length
+    ? "<p><b>" + entero(descartados.length) + "</b> archivo(s) no se enviarán:</p>" +
+      '<div class="modal-lista">' + descartados.map(d =>
+        "<div><b>" + esc(d[0]) + "</b><span>" + esc(d[1]) + "</span></div>").join("") + "</div>"
+    : "";
+
+  $("zonaModal").innerHTML =
+    '<div class="velo" id="velo"><div class="modal">' +
+      '<div class="modal-cabeza"><h3>⚠ Adjuntar y marcar</h3></div>' +
+      '<div class="modal-cuerpo">' +
+        '<p class="subrayado">Subir el respaldo marca la factura, y eso no se puede deshacer. ' +
+        'Ni tú ni Tecnología pueden cambiarlo después.</p>' +
+        "<p>Se registrará a nombre de <b>" + esc(SESION.centro) + "</b>, con la fecha y la hora del " +
+        "servidor. El PDF queda guardado junto al registro.</p>" +
+        "<p><b>" + entero(g.listos.length) + "</b> factura(s):</p>" +
+        '<div class="modal-lista">' + filas + "</div>" +
+        '<label class="campo-obs" for="obsPdf">Observación <i>· opcional, se aplica a todas</i></label>' +
+        '<textarea id="obsPdf" class="obs-modal" rows="2" maxlength="300" ' +
+        'placeholder="Ej.: enviada al convenio el 14/09"></textarea>' +
+        bloqueDescartados +
+      "</div>" +
+      '<div class="modal-pie">' +
+        '<button class="btn-2" id="btnCancelarPdf">Cancelar</button>' +
+        '<button class="btn-peligro" id="btnConfirmarPdf">Sí, adjuntar y marcar</button>' +
+      "</div>" +
+    "</div></div>";
+
+  $("btnCancelarPdf").onclick = cerrarModal;
+  $("velo").addEventListener("click", ev => { if (ev.target.id === "velo") cerrarModal(); });
+  $("btnConfirmarPdf").onclick = () => confirmarPdf(g);
+}
+
+async function confirmarPdf(g){
+  const btn = $("btnConfirmarPdf");
+  btn.disabled = true;
+  $("btnCancelarPdf").disabled = true;
+
+  /* Se lee antes de deshabilitar nada: lo que se escriba aquí vale para todo
+     el lote. Si se deja vacío, cada factura conserva la observación que ya
+     estuviera anotada en su fila de la tabla. */
+  const obsComun = (($("obsPdf") && $("obsPdf").value) || "").trim();
+
+  let carga;
+  try {
+    carga = [];
+    for (let i = 0; i < g.listos.length; i++){
+      btn.textContent = "Leyendo " + (i+1) + " de " + g.listos.length + "…";
+      const x = g.listos[i];
+      carga.push({factura: x.f, nombre: x.a.name,
+                  observacion: obsComun || BORRADORES[x.f] || "",
+                  contenido: await leerBase64(x.a)});
+    }
+  } catch(e){
+    btn.disabled = false; btn.textContent = "Sí, adjuntar y marcar";
+    $("btnCancelarPdf").disabled = false;
+    avisoPanel("No se pudo leer uno de los archivos. No se marcó ninguna factura.", false);
+    return;
+  }
+
+  btn.textContent = "Subiendo…";
+  let data;
+  try {
+    /* La clave se llama «facturas», igual que en el flujo de marcado: los dos
+       flujos comparten el mismo bucle interno y así no hubo que rehacerlo. */
+    data = await llamar(CONFIG.SUBIR_URL, {token: SESION.token, facturas: carga}, 1);
+  } catch(e){
+    cerrarModal();
+    avisoPanel("No se pudo subir: falló la conexión. Revisa en el tablero si alguna quedó " +
+               "marcada antes de volver a intentarlo.", false);
+    return;
+  }
+
+  cerrarModal();
+  if (sesionCaida(data)) return;
+  if (!data || !data.ok){
+    avisoPanel((data && data.mensaje) || "El servidor rechazó la subida. No se marcó ninguna factura.", false);
+    return;
+  }
+
+  (data.grabadas || []).forEach(x => {
+    const f = String(x.factura || "").trim().toUpperCase();
+    if (!f) return;
+    MARCAS[f] = {centro: x.centro || SESION.centro, obs: x.observacion || BORRADORES[f] || "",
+                 por: x.marcadoPor || x.centro || SESION.centro, en: x.marcadoEn || "",
+                 pdf: enlaceRespaldo(x.id, x.respaldo)};
+    delete BORRADORES[f];
+    seleccion.delete(f);
+  });
+  (data.rechazadas || []).forEach(x => {
+    const f = String(x.factura || "").trim().toUpperCase();
+    if (!f) return;
+    if (x.motivo === "ya_marcada"){
+      MARCAS[f] = {centro: x.centro || "", obs: x.observacion || "",
+                   por: x.marcadoPor || x.centro || "", en: x.marcadoEn || "",
+                   pdf: enlaceRespaldo(x.id, x.respaldo)};
+    }
+    seleccion.delete(f);
+  });
+
+  const n = (data.grabadas || []).length, r = (data.rechazadas || []).length;
+  if (n && r)      avisoPanel("Se adjuntaron y marcaron " + entero(n) + " factura(s). " + entero(r) +
+                              " ya estaban marcadas por otra persona.", true);
+  else if (n)      avisoPanel("Se adjuntaron y marcaron " + entero(n) + " factura(s) de forma definitiva.", true);
+  else             avisoPanel("No se marcó ninguna: ya estaban marcadas.", false);
+
+  pintarResumenPdf(g);
+  actualizarContadores();
+  aplicar();
+}
+
+/* ========================= Gráficos (SVG propio, sin librerías) ========================= */
+const AN = 460, AL = 230, M = {t:18, r:14, b:30, l:52};
+const tip = $("tip");
+function mostrarTip(ev, html){ tip.innerHTML = html; tip.style.opacity = 1;
+  tip.style.left = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 12) + "px";
+  tip.style.top  = (ev.clientY - tip.offsetHeight - 12) + "px"; }
+const ocultarTip = () => tip.style.opacity = 0;
+const lienzo = (interior, alto) => '<svg viewBox="0 0 ' + AN + " " + (alto||AL) + '" role="img">' + interior + "</svg>";
+
+function ejes(maximo, etiquetas, formato, alto){
+  alto = alto || AL;
+  const salida = [];
+  for (let i = 0; i <= 4; i++){
+    const y = M.t + (alto - M.t - M.b) * (1 - i/4);
+    salida.push('<line class="rejilla" x1="' + M.l + '" y1="' + y + '" x2="' + (AN-M.r) + '" y2="' + y + '"></line>' +
+      '<text class="eje-valor" x="' + (M.l-7) + '" y="' + (y+3.5) + '" text-anchor="end">' + formato(maximo/4*i) + "</text>");
+  }
+  const paso = (AN - M.l - M.r) / etiquetas.length;
+  etiquetas.forEach((e,i) => salida.push('<text class="eje" x="' + (M.l+paso*(i+.5)) + '" y="' + (alto-M.b+16) + '" text-anchor="middle">' + esc(e) + "</text>"));
+  salida.push('<line class="base" x1="' + M.l + '" y1="' + (alto-M.b) + '" x2="' + (AN-M.r) + '" y2="' + (alto-M.b) + '"></line>');
+  return salida.join("");
+}
+function tapaBarra(x, y, ancho, base, r){
+  const rr = Math.max(0, Math.min(r, base - y, ancho/2));
+  return "M" + x + "," + base + "V" + (y+rr) + "a" + rr + "," + rr + " 0 0 1 " + rr + ",-" + rr +
+         "h" + (ancho-2*rr) + "a" + rr + "," + rr + " 0 0 1 " + rr + "," + rr + "V" + base + "Z";
+}
+function conectarPistas(destino, series, formatoTip){
+  $(destino).querySelectorAll(".pista").forEach(p => {
+    p.addEventListener("mousemove", ev => mostrarTip(ev, formatoTip(series[+p.dataset.i])));
+    p.addEventListener("mouseleave", ocultarTip);
+  });
+}
+function sinDatos(destino){ $(destino).innerHTML = '<p class="vacio">Sin datos para el filtro aplicado.</p>'; }
+
+function barras(destino, series, color, formatoValor, formatoTip){
+  if (!series.length || !series.some(s=>s.valor)) return sinDatos(destino);
+  const maximo = Math.max(...series.map(s => s.valor)) * 1.18 || 1;
+  const altoUtil = AL - M.t - M.b, ancho = (AN - M.l - M.r) / series.length;
+  const grosor = Math.min(38, ancho*0.62);
+  const marcas = series.map((s,i) => {
+    const h = Math.max(2, altoUtil * (s.valor/maximo));
+    const x = M.l + ancho*(i+.5) - grosor/2, y = AL - M.b - h;
+    return '<path d="' + tapaBarra(x, y, grosor, AL-M.b, 4) + '" fill="' + color + '"></path>' +
+      (series.length <= 9 ? '<text class="etiqueta-dato" x="' + (x+grosor/2) + '" y="' + (y-6) + '" text-anchor="middle">' + formatoValor(s.valor) + "</text>" : "") +
+      '<rect class="pista" x="' + (M.l+ancho*i) + '" y="' + M.t + '" width="' + ancho + '" height="' + altoUtil + '" data-i="' + i + '"></rect>';
+  }).join("");
+  $(destino).innerHTML = lienzo(ejes(maximo, series.map(s=>s.etiqueta), formatoValor) + marcas);
+  conectarPistas(destino, series, formatoTip);
+}
+
+function linea(destino, series, color, formatoValor, formatoTip){
+  if (!series.length || !series.some(s=>s.valor)) return sinDatos(destino);
+  const maximo = Math.max(...series.map(s=>s.valor)) * 1.2 || 1;
+  const altoUtil = AL - M.t - M.b, paso = (AN - M.l - M.r) / series.length;
+  const puntos = series.map((s,i) => [M.l + paso*(i+.5), AL - M.b - altoUtil*(s.valor/maximo)]);
+  const trazo = puntos.map((p,i) => (i?"L":"M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" ");
+  const marcas = '<path d="' + trazo + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>' +
+    puntos.map((p,i) => '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="4.5" fill="' + color + '" stroke="#fff" stroke-width="2"></circle>' +
+      (series.length <= 9 ? '<text class="etiqueta-dato" x="' + p[0] + '" y="' + (p[1]-11) + '" text-anchor="middle">' + formatoValor(series[i].valor) + "</text>" : "") +
+      '<rect class="pista" x="' + (M.l+paso*i) + '" y="' + M.t + '" width="' + paso + '" height="' + altoUtil + '" data-i="' + i + '"></rect>').join("");
+  $(destino).innerHTML = lienzo(ejes(maximo, series.map(s=>s.etiqueta), formatoValor) + marcas);
+  conectarPistas(destino, series, formatoTip);
+}
+
+/* Barras horizontales: para categorías de nombre largo (centros, convenios). */
+function barrasHorizontales(destino, series, color, formatoValor, formatoTip){
+  if (!series.length || !series.some(s=>s.valor)) return sinDatos(destino);
+  const anchoEtiqueta = 118, alto = Math.max(150, 20 + series.length*25);
+  const maximo = Math.max(...series.map(s=>s.valor)) * 1.14 || 1;
+  const util = AN - anchoEtiqueta - 58, grosor = 13;
+  const marcas = series.map((s,i) => {
+    const y = 14 + i*25, w = Math.max(2, util * (s.valor/maximo));
+    const rr = Math.min(4, w);
+    const d = "M" + anchoEtiqueta + "," + y + "h" + (w-rr) + "a" + rr + "," + rr + " 0 0 1 " + rr + "," + rr +
+              "v" + (grosor-2*rr) + "a" + rr + "," + rr + " 0 0 1 -" + rr + "," + rr + "H" + anchoEtiqueta + "Z";
+    const etiqueta = s.etiqueta.length > 19 ? s.etiqueta.slice(0,18) + "…" : s.etiqueta;
+    return '<text class="eje-cat" x="' + (anchoEtiqueta-8) + '" y="' + (y+grosor/2+3.5) + '" text-anchor="end">' + esc(etiqueta) + "</text>" +
+      '<path d="' + d + '" fill="' + color + '"></path>' +
+      '<text class="etiqueta-dato" x="' + (anchoEtiqueta+w+7) + '" y="' + (y+grosor/2+3.5) + '">' + formatoValor(s.valor) + "</text>" +
+      '<rect class="pista" x="0" y="' + (y-5) + '" width="' + AN + '" height="25" data-i="' + i + '"></rect>';
+  }).join("");
+  $(destino).innerHTML = '<svg viewBox="0 0 ' + AN + " " + alto + '" role="img">' +
+    '<line class="base" x1="' + anchoEtiqueta + '" y1="8" x2="' + anchoEtiqueta + '" y2="' + (alto-8) + '"></line>' + marcas + "</svg>";
+  conectarPistas(destino, series, formatoTip);
+}
+
+function agrupar(filas, clave, valorFn){
+  const mapa = new Map();
+  filas.forEach(r => {
+    const k = clave(r);
+    const acc = mapa.get(k) || {etiqueta:k, valor:0, n:0};
+    acc.valor += valorFn(r); acc.n++;
+    mapa.set(k, acc);
+  });
+  return [...mapa.values()];
+}
+
+function pintarAnalisis(){
+  if (!esAdmin()) return;              // la vista de análisis es solo de ADMIN
+  const meses = [...new Set(filtrados.map(r => r.d.slice(0,7)).filter(Boolean))].sort();
+  const porMes = meses.map(m => {
+    const filas = filtrados.filter(r => r.d.slice(0,7) === m);
+    return {etiqueta: mesCorto(m), valor: filas.reduce((a,r)=>a+r.s,0), n: filas.length};
+  });
+
+  barras("g1", porMes, "var(--serie-2)", compacto,
+    s => "<b>" + s.etiqueta + "</b><br>Pendiente: " + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
+
+  linea("g2", porMes.map(s => ({etiqueta:s.etiqueta, valor:s.n, monto:s.valor})), "var(--serie-1)", entero,
+    s => "<b>" + s.etiqueta + "</b><br>" + entero(s.valor) + " factura(s)<br>" + dinero(s.monto));
+
+  const totalPend = filtrados.reduce((a,r)=>a+r.s,0);
+  barras("gAging", TRAMOS.map((t,i) => {
+    const filas = filtrados.filter(r => r.tramo === i);
+    return {etiqueta: t.replace(" días",""), valor: filas.reduce((a,r)=>a+r.s,0), n: filas.length, nombre:t};
+  }), "var(--serie-2)", compacto,
+    s => "<b>" + s.nombre + "</b><br>" + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)" +
+         (totalPend ? "<br>" + (s.valor/totalPend*100).toFixed(1) + "% del pendiente" : ""));
+
+  if (esAdmin()){
+    barrasHorizontales("gCentros",
+      agrupar(filtrados, r => r.c, r => r.s).sort((a,b)=>b.valor-a.valor),
+      "var(--serie-1)", compacto,
+      s => "<b>" + s.etiqueta + "</b><br>Pendiente: " + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
+  }
+
+  barrasHorizontales("gPlanes",
+    agrupar(filtrados, r => r.p || "(sin convenio)", r => r.s).sort((a,b)=>b.valor-a.valor).slice(0,10),
+    "var(--serie-1)", compacto,
+    s => "<b>" + s.etiqueta + "</b><br>Pendiente: " + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
+
+  const marcadas = filtrados.filter(r => MARCAS[r.f]);
+  barras("gAvance", [
+    {etiqueta:"Marcadas",   valor: marcadas.reduce((a,r)=>a+r.s,0), n: marcadas.length},
+    {etiqueta:"Sin marcar", valor: totalPend - marcadas.reduce((a,r)=>a+r.s,0), n: filtrados.length - marcadas.length}
+  ], "var(--serie-1)", compacto,
+    s => "<b>" + s.etiqueta + "</b><br>" + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
+
+  if (!esAdmin()) return;
+
+  const porCentro = agrupar(filtrados, r => r.c, () => 0).map(g => {
+    const filas = filtrados.filter(r => r.c === g.etiqueta);
+    return {centro: g.etiqueta, total: filas.length,
+            pend: filas.reduce((a,r)=>a+r.s,0),
+            viejo: filas.filter(r=>r.tramo===3).reduce((a,r)=>a+r.s,0),
+            marcadas: filas.filter(r => MARCAS[r.f]).length};
+  }).sort((a,b) => b.pend - a.pend);
+
+  $("tablaCentros").innerHTML =
+    "<thead><tr><th>Centro</th><th class='num'>Facturas</th><th class='num'>Pendiente</th>" +
+    "<th class='num'>&gt; 90 días</th><th class='num'>Gestionadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
+    (porCentro.length ? porCentro.map(c =>
+      "<tr><td><b>" + esc(c.centro) + "</b></td>" +
+      "<td class='num'>" + entero(c.total) + "</td>" +
+      "<td class='num'>" + dinero(c.pend) + "</td>" +
+      "<td class='num'>" + dinero(c.viejo) + "</td>" +
+      "<td class='num'>" + entero(c.marcadas) + " / " + entero(c.total) + "</td>" +
+      "<td class='num'>" + (c.total ? (c.marcadas/c.total*100).toFixed(1) : "0.0") + "%</td></tr>").join("")
+      : "<tr><td colspan='6' class='vacio'>Sin datos.</td></tr>") + "</tbody>";
+}
+
+/* ========================= Descargas (CSV, sin librerías) ========================= */
+const COLUMNAS = ["Centro","Número factura","Fecha","Caja","Plan | Convenio","Valor","Saldo",
+                  "Días","Marcada","Marcada por","Marcada el","Observación"];
+function aFila(r){
+  const m = MARCAS[r.f];
+  return [r.c, r.f, fechaLarga(r.d), r.u, r.p, r.v.toFixed(2), r.s.toFixed(2), r.dias,
+          m ? "SI" : "NO", m ? (m.por || m.centro) : "", m ? selloLegible(m.en) : "", m ? m.obs : ""];
+}
+function descargarCsv(filas, nombre){
+  /* La descarga es solo de ADMIN. Los botones ya están ocultos para los
+     centros; esto cubre además que alguien llame a la función a mano. */
+  if (!esAdmin()){ avisoPanel("La descarga está reservada a Administración.", false); return; }
+  if (!filas.length){ avisoPanel("No hay filas para descargar.", false); return; }
+  const salida = ["sep=;", COLUMNAS.join(";")]
+    .concat(filas.map(f => f.map(c => { const t = String(c==null?"":c);
+      return /[;"\n\r]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t; }).join(";"))).join("\r\n");
+  const blob = new Blob(["﻿" + salida], {type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre + "_" + FECHA_CORTE.replace(/[^0-9]/g,"") + ".csv";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  avisoPanel("Archivo generado: " + entero(filas.length) + " fila(s).", true);
+}
+
+/* ========================= Desplegable propio ========================= */
+function armarCombo(id, obtenerOpciones){
+  const input = $(id); if (!input) return;
+  const caja = document.createElement("div"); caja.className = "combo";
+  input.parentNode.insertBefore(caja, input); caja.appendChild(input);
+  const lista = document.createElement("div"); lista.className = "combo-lista oculto"; caja.appendChild(lista);
+  let actuales = [];
+
+  function pintar(todo){
+    const f = todo ? "" : (input.value||"").trim().toLowerCase();
+    actuales = (obtenerOpciones()||[]).filter(o => !f || String(o).toLowerCase().includes(f));
+    lista.innerHTML = actuales.length
+      ? actuales.slice(0,300).map((o,i) => '<div class="combo-opt" data-i="' + i + '">' + esc(o) + "</div>").join("")
+      : '<div class="combo-nada">Escribe el nombre de tu centro</div>';
+  }
+  const abrir  = todo => { pintar(todo); lista.classList.remove("oculto"); };
+  const cerrar = () => lista.classList.add("oculto");
+
+  let sx=0, sy=0, movido=false, sobre=null;
+  lista.addEventListener("pointerdown", e => { sobre = e.target.closest(".combo-opt"); sx=e.clientX; sy=e.clientY; movido=false; }, {passive:true});
+  lista.addEventListener("pointermove", e => { if (Math.abs(e.clientX-sx)>10 || Math.abs(e.clientY-sy)>10) movido = true; }, {passive:true});
+  lista.addEventListener("pointerup", e => {
+    const o = e.target.closest(".combo-opt");
+    if (o && o === sobre && !movido){ input.value = actuales[+o.dataset.i]; cerrar(); }
+    sobre = null;
+  });
+
+  const abrirTodo = () => { abrir(true); try { input.select(); } catch(e){} };
+  input.addEventListener("focus", abrirTodo);
+  input.addEventListener("click", abrirTodo);
+  input.addEventListener("input", () => abrir(false));
+  document.addEventListener("pointerdown", e => { if (!caja.contains(e.target)) cerrar(); }, {passive:true});
+}
+
+/* ========================= Controles ========================= */
+function conectarControles(){
+  $("btnEntrar").onclick = entrar;
+  $("clave").addEventListener("keydown", ev => { if (ev.key === "Enter") entrar(); });
+  $("btnSalir").onclick = () => salir();
+
+  CAMPOS.forEach(id => $(id).addEventListener(id === "fBusqueda" ? "input" : "change", aplicar));
+  $("btnLimpiar").onclick  = () => { CAMPOS.forEach(id => $(id).value = ""); aplicar(); };
+  $("btnRecargar").onclick = () => cargarDatos();
+
+  /* Adjuntar respaldos: botón, arrastrar y soltar. */
+  const zona = $("zonaPdf"), entrada = $("archivosPdf");
+  $("btnElegirPdf").onclick = () => entrada.click();
+  entrada.addEventListener("change", () => {
+    recibirPdf(entrada.files);
+    entrada.value = "";          // permite volver a elegir el mismo archivo
+  });
+  ["dragenter","dragover"].forEach(ev => zona.addEventListener(ev, e => {
+    e.preventDefault(); zona.classList.add("encima");
+  }));
+  ["dragleave","drop"].forEach(ev => zona.addEventListener(ev, e => {
+    e.preventDefault();
+    if (ev === "dragleave" && zona.contains(e.relatedTarget)) return;
+    zona.classList.remove("encima");
+  }));
+  zona.addEventListener("drop", e => recibirPdf(e.dataTransfer && e.dataTransfer.files));
+  /* Sin el navegador abriría el PDF y se perdería lo que haya en pantalla. */
+  ["dragover","drop"].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
+
+  document.querySelectorAll(".pestanas button").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".pestanas button").forEach(x => x.classList.toggle("activa", x === b));
+    const analisis = b.dataset.vista === "analisis";
+    $("vistaDetalle").classList.toggle("oculto", analisis);
+    $("vistaAnalisis").classList.toggle("oculto", !analisis);
+  });
+
+  $("btnPrimera").onclick   = () => { pagina = 1; pintarTabla(); };
+  $("btnAnterior").onclick  = () => { pagina--; pintarTabla(); };
+  $("btnSiguiente").onclick = () => { pagina++; pintarTabla(); };
+  $("btnUltima").onclick    = () => { pagina = Math.ceil(filtrados.length/POR_PAGINA); pintarTabla(); };
+
+  $("btnLoteMarcar").onclick  = () => pedirConfirmacion([...seleccion]);
+  $("btnLoteLimpiar").onclick = () => { seleccion.clear(); pintarTabla(); };
+  $("btnLoteObs").onclick = () => {
+    const texto = prompt("Observación que se aplicará a las " + seleccion.size + " facturas seleccionadas:");
+    if (texto === null) return;
+    const limpio = texto.trim();
+    seleccion.forEach(f => { if (limpio) BORRADORES[f] = limpio; else delete BORRADORES[f]; });
+    pintarTabla();
+  };
+
+  $("btnExportarFiltro").onclick = () => descargarCsv(filtrados.map(aFila), "AUTOCONSUMOS_FILTRADO");
+  $("btnExportarTodo").onclick   = () => descargarCsv(DATOS.map(aFila), "AUTOCONSUMOS_CARTERA");
+
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape") cerrarModal(); });
+}
+
+/* ========================= Arranque ========================= */
+async function arrancar(){
+  document.title = "Autoconsumos · Cartera pendiente";
+  conectarControles();
+  conectarTabla();
+
+  let centros = CONFIG.CENTROS_RESPALDO.slice();
+  armarCombo("centro", () => centros);
+
+  if ($("loginDemo") && CONFIG.MODO_DEMO){
+    $("loginDemo").innerHTML = "<b>Modo demostración.</b> Entra con cualquier centro de la lista y la " +
+      "contraseña <b>demo</b>. Para ver todos los centros, usa <b>ADMINISTRACIÓN</b> / <b>demo</b>.";
+    $("loginDemo").classList.remove("oculto");
+    centros = centros.concat(["ADMINISTRACIÓN"]);
+  }
+
+  /* Catálogo de centros en vivo, si hay flujo configurado. */
+  if (CONFIG.CATALOGOS_URL && !CONFIG.MODO_DEMO){
+    try {
+      const d = await llamar(CONFIG.CATALOGOS_URL, {}, 1);
+      if (d && Array.isArray(d.centros) && d.centros.length) centros = d.centros;
+    } catch(e){ /* se queda con el respaldo */ }
+  }
+
+  /* Sesión todavía viva en esta pestaña. */
+  const guardada = leerSesion();
+  if (guardada){ SESION = guardada; await abrirApp(); }
+}
+
+/* ========================= MODO DEMOSTRACIÓN =========================
+   Datos inventados para poder recorrer el tablero antes de que existan
+   los flujos. No escribe nada en ninguna parte. Se desactiva poniendo
+   MODO_DEMO en false, y entonces todo este bloque queda sin uso.       */
+let demoMarcas = [];
+function demoVerificar(centro, clave){
+  if (String(clave) !== "demo") return {ok:false};
+  const admin = /ADMINISTRA/i.test(centro);
+  return {ok:true, centro: centro, rol: admin ? "ADMIN" : "CENTRO",
+          token: "demo-token", expira: new Date(Date.now()+8*3600000).toISOString()};
+}
+function demoDatos(){
+  const centros = CONFIG.CENTROS_RESPALDO;
+  const planes  = ["BMI","SALUD S.A.","ECUASANITAS","CONFIAMED","PARTICULAR","BUPA","HUMANA"];
+  const cajas   = ["mgomez","jvera","aponce","lcastro"];
+  const mios    = esAdmin() ? centros : [SESION.centro];
+  const filas = [];
+  let semilla = 20260819;
+  const aleatorio = () => { semilla = (semilla*9301 + 49297) % 233280; return semilla/233280; };
+  for (let i = 0; i < (esAdmin() ? 900 : 140); i++){
+    const dia = new Date(Date.UTC(2026, 0, 5) + Math.floor(aleatorio()*220)*86400000);
+    const valor = Math.round((3 + aleatorio()*180) * 100)/100;
+    filas.push({
+      "Centro": mios[Math.floor(aleatorio()*mios.length)],
+      "Número factura": "0" + (10+Math.floor(aleatorio()*8)) + "-1" + (10+Math.floor(aleatorio()*80)) +
+                        "-0000" + String(10000 + Math.floor(aleatorio()*89999)),
+      "Fecha": dia.toISOString().slice(0,10),
+      "User Caja": cajas[Math.floor(aleatorio()*cajas.length)],
+      "Plan | Convenio": planes[Math.floor(aleatorio()*planes.length)],
+      "Valor": valor,
+      "Saldo": valor
+    });
+  }
+  /* Unas cuantas ya marcadas, para ver cómo se bloquean. */
+  if (!demoMarcas.length){
+    demoMarcas = filas.slice(0, Math.floor(filas.length*0.12)).map((f,i) => ({
+      factura: f["Número factura"], centro: f["Centro"],
+      observacion: i % 3 === 0 ? "Enviada al convenio el lunes." : "",
+      marcadoPor: f["Centro"],
+      marcadoEn: new Date(Date.now() - (i+1)*3600000).toISOString()
+    }));
+  }
+  return {ok:true, centro: SESION.centro, rol: SESION.rol, corte: "19/08/2026",
+          consultado: new Date().toISOString(), origen: "datos inventados (demostración)",
+          filas: filas, marcas: demoMarcas};
+}
+function demoMarcar(carga){
+  const grabadas = [], rechazadas = [];
+  carga.forEach(x => {
+    const f = x.factura.toUpperCase();
+    if (demoMarcas.some(m => m.factura.toUpperCase() === f)){
+      const m = demoMarcas.find(m => m.factura.toUpperCase() === f);
+      rechazadas.push({factura: f, motivo: "ya_marcada", centro: m.centro,
+                       observacion: m.observacion, marcadoPor: m.marcadoPor, marcadoEn: m.marcadoEn});
+    } else {
+      const nuevo = {factura: f, centro: SESION.centro, observacion: x.observacion,
+                     marcadoPor: SESION.centro, marcadoEn: new Date().toISOString()};
+      demoMarcas.push(nuevo);
+      grabadas.push(nuevo);
+    }
+  });
+  return {ok:true, grabadas: grabadas, rechazadas: rechazadas};
+}
+
+arrancar();
+</script>
+</body>
+</html>

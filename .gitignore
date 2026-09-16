@@ -1,0 +1,42 @@
+# Datos: nada de la base real entra al repositorio.
+*.xlsx
+*.xls
+*.xlsb
+*.csv
+*.json
+!package.json
+
+# Copias de trabajo y exportaciones del propio tablero
+AUTOCONSUMOS_*.csv
+*_copia.html
+*copy*.html
+*.bak
+*.orig
+*~
+
+# Sistema operativo
+Thumbs.db
+ehthumbs.db
+desktop.ini
+.DS_Store
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.code-workspace
+
+# OneDrive deja estos al sincronizar
+*.tmp
+~$*
+
+# Credenciales de los flujos: la firma &sig= es la llave del disparador.
+urls.ps1
+*.local.ps1
+
+# Transcripciones de sesión: llevan las URL de los flujos con su firma &sig=
+# escritas en texto plano. Nunca al repositorio.
+*.txt
+
+# Respaldos de facturas. Son documentos reales; no entran al repositorio.
+*.pdf

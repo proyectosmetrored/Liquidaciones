@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de Autoconsumos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --fondo:#EEF3F5; --lamina:#FFFFFF; --tinta:#0C2129; --tinta-2:#42606E; --tinta-3:#7D97A2;
+  --acento:#0E7490; --acento-2:#1597B8; --acento-suave:#E2F1F6; --borde:#D5E2E7;
+  --ok:#136F52; --ok-suave:#E0F2EB; --alerta:#9A5B0B; --alerta-suave:#FBEEDC;
+  --critico:#A8291D; --critico-suave:#FAE6E3;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --fondo:#08161C; --lamina:#0E242D; --tinta:#E8F1F4; --tinta-2:#A2BCC6; --tinta-3:#6D8B96;
+    --acento:#35B3D2; --acento-2:#5FC9E4; --acento-suave:#0F3442; --borde:#204653;
+    --ok:#4FC79E; --ok-suave:#0C3630; --alerta:#E0A44E; --alerta-suave:#3A2A12;
+    --critico:#EE8377; --critico-suave:#3D1B17;
+  }
+}
+:root[data-theme="dark"]{
+  --fondo:#08161C; --lamina:#0E242D; --tinta:#E8F1F4; --tinta-2:#A2BCC6; --tinta-3:#6D8B96;
+  --acento:#35B3D2; --acento-2:#5FC9E4; --acento-suave:#0F3442; --borde:#204653;
+  --ok:#4FC79E; --ok-suave:#0C3630; --alerta:#E0A44E; --alerta-suave:#3A2A12;
+  --critico:#EE8377; --critico-suave:#3D1B17;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--fondo); color:var(--tinta);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+#escenario{height:100%; display:flex; flex-direction:column}
+#barra{height:3px; background:var(--borde); flex:none}
+#avance{height:100%; width:0; background:var(--acento); transition:width .3s ease}
+#marco{flex:1; display:flex; align-items:center; justify-content:center; padding:24px 16px; min-height:0}
+.lamina{
+  display:none; width:100%; max-width:1020px; background:var(--lamina);
+  border:1px solid var(--borde); border-radius:4px; padding:48px 56px;
+  max-height:100%; overflow-y:auto;
+}
+.lamina.activa{display:block; animation:entrar .35s ease both}
+@keyframes entrar{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion:reduce){.lamina.activa{animation:none} #avance{transition:none}}
+#pie{
+  flex:none; display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:10px 20px calc(10px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid var(--borde); background:var(--lamina);
+}
+#ruta{font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--tinta-3)}
+.controles{display:flex; align-items:center; gap:8px}
+button.nav{
+  font-family:var(--sans); font-size:13px; font-weight:500; color:var(--tinta);
+  background:var(--lamina); border:1px solid var(--borde); border-radius:3px;
+  padding:6px 14px; cursor:pointer;
+}
+button.nav:hover:not(:disabled){border-color:var(--acento); color:var(--acento)}
+button.nav:disabled{opacity:.35; cursor:default}
+button.nav:focus-visible,#indice:focus-visible{outline:2px solid var(--acento); outline-offset:2px}
+#cuenta{font-family:var(--mono); font-size:12px; color:var(--tinta-2); min-width:58px; text-align:center}
+.seccion{
+  font-family:var(--mono); font-size:11px; font-weight:500; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--acento); margin:0 0 14px;
+}
+h1{
+  font-family:var(--serif); font-weight:500; font-size:clamp(2.1rem,4.6vw,3.4rem);
+  line-height:1.08; letter-spacing:-.015em; margin:0 0 18px; text-wrap:balance;
+}
+h2{
+  font-family:var(--serif); font-weight:500; font-size:clamp(1.6rem,3.1vw,2.3rem);
+  line-height:1.15; letter-spacing:-.01em; margin:0 0 22px; text-wrap:balance;
+}
+h3{font-family:var(--sans); font-size:1rem; font-weight:600; margin:0 0 8px}
+p{margin:0 0 15px; max-width:66ch; color:var(--tinta-2)}
+p.destacado{font-size:1.1rem; color:var(--tinta)}
+strong{color:var(--tinta); font-weight:600}
+.sep{height:1px; background:var(--borde); border:0; margin:28px 0}
+.rejilla{display:grid; gap:18px; margin:0 0 6px}
+.dos{grid-template-columns:repeat(2,1fr)}
+.tres{grid-template-columns:repeat(3,1fr)}
+.cuatro{grid-template-columns:repeat(4,1fr)}
+@media (max-width:760px){.dos,.tres,.cuatro{grid-template-columns:1fr}}
+.cifra{border-left:2px solid var(--acento); padding-left:15px}
+.cifra .n{
+  font-family:var(--mono); font-weight:600; font-size:clamp(1.5rem,3vw,2rem);
+  color:var(--tinta); line-height:1.1; font-variant-numeric:tabular-nums; display:block;
+}
+.cifra .t{font-size:.85rem; color:var(--tinta-2); margin-top:5px; display:block}
+.bloque{background:var(--fondo); border:1px solid var(--borde); border-radius:4px; padding:20px 22px}
+.bloque p{margin-bottom:0}
+.riesgo{border-left:3px solid var(--critico); background:var(--critico-suave); padding:18px 22px; border-radius:0 4px 4px 0}
+.riesgo h3{color:var(--critico)}
+.riesgo p,.logro p,.abierto p{color:var(--tinta); margin-bottom:0}
+.logro{border-left:3px solid var(--ok); background:var(--ok-suave); padding:18px 22px; border-radius:0 4px 4px 0}
+.logro h3{color:var(--ok)}
+.abierto{border-left:3px solid var(--alerta); background:var(--alerta-suave); padding:18px 22px; border-radius:0 4px 4px 0}
+.abierto h3{color:var(--alerta)}
+.tabla-caja{overflow-x:auto; margin:0 0 10px}
+table{border-collapse:collapse; width:100%; font-size:.92rem; min-width:520px}
+th,td{text-align:left; padding:10px 13px; border-bottom:1px solid var(--borde); vertical-align:top}
+th{
+  font-family:var(--mono); font-size:10.5px; font-weight:500; letter-spacing:.09em;
+  text-transform:uppercase; color:var(--tinta-3); border-bottom:1px solid var(--tinta-3);
+}
+td{color:var(--tinta-2)}
+td:first-child{color:var(--tinta); font-weight:500}
+td.num{font-family:var(--mono); font-variant-numeric:tabular-nums; text-align:right}
+.antes{color:var(--critico)}
+.ahora{color:var(--ok); font-weight:500}
+ul.lista{margin:0 0 15px; padding-left:0; list-style:none}
+ul.lista li{position:relative; padding-left:23px; margin-bottom:10px; color:var(--tinta-2); max-width:66ch}
+ul.lista li::before{
+  content:""; position:absolute; left:6px; top:.66em; width:5px; height:5px;
+  background:var(--acento); border-radius:50%;
+}
+ol.pasos{margin:0; padding-left:0; list-style:none; counter-reset:p}
+ol.pasos li{counter-increment:p; position:relative; padding-left:40px; margin-bottom:16px; color:var(--tinta-2); max-width:66ch}
+ol.pasos li::before{
+  content:counter(p); position:absolute; left:0; top:-1px; width:26px; height:26px;
+  display:grid; place-items:center; border:1px solid var(--acento); color:var(--acento);
+  border-radius:50%; font-family:var(--mono); font-size:11px; font-weight:600;
+}
+ol.pasos b{color:var(--tinta); font-weight:600}
+.etq{
+  display:inline-block; font-family:var(--mono); font-size:10px; font-weight:500;
+  letter-spacing:.07em; text-transform:uppercase; padding:2px 8px; border-radius:3px;
+  background:var(--acento-suave); color:var(--acento);
+}
+.etq.no{background:var(--critico-suave); color:var(--critico)}
+.etq.si{background:var(--ok-suave); color:var(--ok)}
+.cita{
+  border-left:2px solid var(--acento); padding-left:20px; font-family:var(--serif);
+  font-size:1.25rem; line-height:1.45; color:var(--tinta); margin:0 0 8px; max-width:58ch;
+}
+.portada .marca{
+  font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--tinta-3); margin:0 0 30px;
+}
+.portada h1{font-size:clamp(2.6rem,6vw,4.2rem); margin-bottom:16px}
+.portada .bajada{font-family:var(--serif); font-style:italic; font-size:1.35rem; color:var(--tinta-2); max-width:52ch; margin:0 0 36px}
+.portada .datos{display:flex; flex-wrap:wrap; gap:36px; padding-top:24px; border-top:1px solid var(--borde)}
+.portada .datos div{font-size:.88rem; color:var(--tinta-2)}
+.portada .datos span{
+  display:block; font-family:var(--mono); font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--tinta-3); margin-bottom:3px;
+}
+#indice{
+  font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--tinta-2); background:var(--lamina); border:1px solid var(--borde);
+  border-radius:3px; padding:6px 10px; cursor:pointer; max-width:46vw;
+}
+@media print{
+  #pie,#barra{display:none}
+  .lamina{display:block!important; page-break-after:always; border:0; max-height:none; padding:0 0 40px}
+  body{background:#fff}
+}
+@media (max-width:640px){
+  .lamina{padding:28px 20px}
+  #pie{padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
+  #indice{display:none}
+}
+</style>
+</head>
+<body>
+<div id="escenario">
+  <div id="barra"><div id="avance"></div></div>
+  <main id="marco">
+
+  <!-- 1 -->
+  <section class="lamina portada" data-sec="Entrega">
+    <p class="marca">Metrored · Centro Médico Ambulatorio Metroambulat</p>
+    <h1>Tablero de Autoconsumos</h1>
+    <p class="bajada">Para consultar la cartera pendiente y registrar la gestión de cada centro médico.</p>
+    <div class="datos">
+      <div><span>Entrega</span>16 de septiembre de 2026</div>
+      <div><span>Para</span>11 centros médicos</div>
+      <div><span>Reemplaza a</span>El tablero que se enviaba por correo</div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="lamina" data-sec="El problema">
+    <p class="seccion">De dónde venimos</p>
+    <h2>Un archivo de 10 megas que viajaba por correo</h2>
+    <p class="destacado">La herramienta anterior la armó un área usuaria para resolver su propio trabajo, y durante un tiempo cumplió. Al pasar a Tecnología encontramos tres cosas que no podíamos dejar así.</p>
+    <div class="rejilla cuatro">
+      <div class="cifra"><span class="n">10 MB</span><span class="t">pesaba cada envío, a cada persona</span></div>
+      <div class="cifra"><span class="n">25.997</span><span class="t">facturas guardadas dentro del archivo</span></div>
+      <div class="cifra"><span class="n">1</span><span class="t">contraseña, igual para todos</span></div>
+      <div class="cifra"><span class="n">0</span><span class="t">de lo que anotaba un centro lo veían los demás</span></div>
+    </div>
+    <hr class="sep">
+    <p>Para actualizarlo había que volver a generarlo a mano y reenviarlo a todo el mundo. Quien no recibía el correo, seguía trabajando con datos viejos.</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="lamina" data-sec="El problema">
+    <p class="seccion">Los tres riesgos</p>
+    <h2>Por qué había que rehacerlo</h2>
+    <div class="rejilla" style="gap:16px">
+      <div class="riesgo">
+        <h3>La contraseña no protegía nada</h3>
+        <p>Era la misma para todos y estaba escrita dentro del propio archivo. Cualquiera que supiera dónde mirar podía leerla, y los datos ya venían cargados adentro aunque no se pusiera ninguna clave.</p>
+      </div>
+      <div class="riesgo">
+        <h3>Llevaba datos de pacientes</h3>
+        <p>El archivo que circulaba incluía cédulas y nombres completos de pacientes. No hacían falta para gestionar el cobro, y estaban ahí, en un archivo que se reenviaba por correo.</p>
+      </div>
+      <div class="riesgo">
+        <h3>Cada quien anotaba en su propia copia</h3>
+        <p>Las observaciones se guardaban en el computador de cada persona. Nadie veía lo que hacían los demás, y si se cambiaba de equipo o se limpiaba el navegador, se perdían.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="lamina" data-sec="La solución">
+    <p class="seccion">Qué se hizo</p>
+    <h2>Ahora el archivo ya no lleva los datos</h2>
+    <p class="destacado">El tablero dejó de ser un documento con la información adentro y pasó a ser una pantalla que la pide cada vez que alguien entra.</p>
+    <div class="rejilla tres">
+      <div class="bloque">
+        <h3>Usted entra con su clave</h3>
+        <p>Cada centro tiene la suya. Se revisa del lado del sistema, no dentro del archivo.</p>
+      </div>
+      <div class="bloque">
+        <h3>El sistema le entrega lo suyo</h3>
+        <p>Solo la cartera de su centro, tomada del Excel que el área mantiene al día.</p>
+      </div>
+      <div class="bloque">
+        <h3>Usted registra su gestión</h3>
+        <p>Lo que marca queda guardado en un sitio común, y los demás lo ven.</p>
+      </div>
+    </div>
+    <hr class="sep">
+    <p>Nada queda guardado en el computador del usuario. Si alguien recibe el archivo sin tener una clave de centro, no ve absolutamente ningún dato.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="lamina" data-sec="La solución">
+    <p class="seccion">Comparación</p>
+    <h2>Qué cambia en el día a día</h2>
+    <div class="tabla-caja">
+      <table>
+        <thead><tr><th></th><th>Antes</th><th>Ahora</th></tr></thead>
+        <tbody>
+          <tr><td>Cómo se recibe</td><td class="antes">Por correo, 10 MB cada vez</td><td class="ahora">Se abre un enlace, siempre el mismo</td></tr>
+          <tr><td>La clave</td><td class="antes">Una sola, escrita en el archivo</td><td class="ahora">Una por centro, revisada por el sistema</td></tr>
+          <tr><td>Qué ve cada uno</td><td class="antes">Todos veían todo</td><td class="ahora">Cada centro ve solo su cartera</td></tr>
+          <tr><td>Las observaciones</td><td class="antes">En el computador de cada quien</td><td class="ahora">En un sitio común, visibles para todos</td></tr>
+          <tr><td>Corregir un marcado</td><td class="antes">Se podía borrar sin dejar rastro</td><td class="ahora">No se puede: queda firmado</td></tr>
+          <tr><td>La fecha de los datos</td><td class="antes">Siempre decía &laquo;hoy&raquo;, aunque fuera de hace meses</td><td class="ahora">La fecha real del archivo</td></tr>
+          <tr><td>Datos de pacientes</td><td class="antes">Cédulas y nombres en el archivo</td><td class="ahora">No salen del Excel</td></tr>
+          <tr><td>Actualizar</td><td class="antes">Regenerarlo a mano y reenviarlo</td><td class="ahora">Guardar el Excel. Nada más</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="lamina" data-sec="Garantías">
+    <p class="seccion">Confidencialidad</p>
+    <h2>Cada centro ve únicamente lo suyo</h2>
+    <p class="cita">No es que las facturas de los otros centros estén escondidas. Es que nunca salen del sistema hacia esa pantalla.</p>
+    <hr class="sep">
+    <div class="rejilla dos">
+      <div>
+        <h3>Por qué importa la diferencia</h3>
+        <p>En el tablero anterior, todos los datos llegaban al computador de cada persona y la pantalla solo mostraba una parte. Quien supiera buscar, veía el resto.</p>
+        <p>Ahora el sistema decide qué enviar según con qué clave se entró. Lo de los demás centros no se envía nunca.</p>
+      </div>
+      <div>
+        <h3>Y los datos del paciente</h3>
+        <p>De cada factura se envía lo necesario para cobrarla: centro, número, fecha, caja, plan y valores.</p>
+        <p>La cédula, el nombre y el diagnóstico <strong>no se envían</strong>. Siguen en el Excel del área, pero no llegan al tablero de nadie.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="lamina" data-sec="Garantías">
+    <p class="seccion">Trazabilidad</p>
+    <h2>Lo que se marca queda firmado</h2>
+    <div class="rejilla dos">
+      <div>
+        <ul class="lista">
+          <li>Al marcar una factura queda registrado <strong>quién la marcó, en qué centro y a qué hora</strong>.</li>
+          <li>La hora es la del sistema, no la del reloj del computador de cada quien.</li>
+          <li>La observación se escribe <strong>antes</strong> de confirmar. Después ya no se cambia.</li>
+          <li>Antes de guardar, el tablero muestra las facturas y avisa que no se puede deshacer.</li>
+          <li><strong>No se puede borrar ni editar.</strong> Ni desde el tablero, ni por otro camino.</li>
+        </ul>
+      </div>
+      <div class="logro">
+        <h3>Si dos centros marcan la misma factura</h3>
+        <p>Queda la del primero. Al segundo se le avisa quién la marcó y cuándo, y su intento no cambia nada de lo ya registrado.</p>
+        <p style="margin-top:12px">El sistema no permite dos registros de una misma factura, así que no depende de que nadie se acuerde de revisar antes.</p>
+      </div>
+    </div>
+    <p style="margin-top:16px">Cada registro guarda la factura completa tal como estaba en ese momento. Aunque el Excel se vuelva a generar, lo registrado se mantiene.</p>
+  </section>
+
+  <!-- 8 -->
+  <section class="lamina" data-sec="Garantías">
+    <p class="seccion">Respaldo</p>
+    <h2>El comprobante queda junto a la factura</h2>
+    <p class="destacado">La supervisora adjunta el PDF desde la misma pantalla, y queda guardado junto al registro de esa factura.</p>
+    <div class="rejilla tres">
+      <div class="bloque"><h3>Se sube ahí mismo</h3><p>Sin salir del tablero y sin entrar a otro sistema.</p></div>
+      <div class="bloque"><h3>Queda con su factura</h3><p>No en una carpeta aparte que después hay que cruzar a mano.</p></div>
+      <div class="bloque"><h3>Se puede consultar</h3><p>Cualquiera que revise esa factura ve el respaldo que la sustenta.</p></div>
+    </div>
+    <p style="margin-top:16px">Fue la última mejora que pidió el área, y con ella el soporte documental y el dato dejaron de vivir separados.</p>
+  </section>
+
+  <!-- 9 -->
+  <section class="lamina" data-sec="Uso">
+    <p class="seccion">Rapidez</p>
+    <h2>Abre en segundos y está siempre al día</h2>
+    <div class="rejilla tres">
+      <div class="cifra"><span class="n">10 MB</span><span class="t">pesaba antes el archivo que se enviaba</span></div>
+      <div class="cifra" style="border-color:var(--ok)"><span class="n">4 seg</span><span class="t">tarda hoy en abrir con los datos cargados</span></div>
+      <div class="cifra" style="border-color:var(--ok)"><span class="n">0</span><span class="t">pasos para actualizarlo: basta con guardar el Excel</span></div>
+    </div>
+    <hr class="sep">
+    <div class="rejilla dos">
+      <div>
+        <h3>Desapareció el trabajo de mantenerlo</h3>
+        <p>Ya no hay que regenerar nada ni reenviar nada. El área actualiza su Excel como siempre lo hizo, y el tablero refleja ese cambio en un par de minutos.</p>
+      </div>
+      <div>
+        <h3>Y desapareció el descuadre</h3>
+        <p>Antes cada persona podía tener una copia distinta según cuándo recibió el correo. Ahora todos miran lo mismo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="lamina" data-sec="Uso">
+    <p class="seccion">Roles</p>
+    <h2>Qué puede hacer cada persona</h2>
+    <div class="tabla-caja">
+      <table>
+        <thead><tr><th></th><th>Supervisora de centro</th><th>Administración</th></tr></thead>
+        <tbody>
+          <tr><td>Facturas que ve</td><td>Solo las de su centro</td><td>Las de todos los centros</td></tr>
+          <tr><td>Buscar y filtrar</td><td><span class="etq si">Sí</span></td><td><span class="etq si">Sí</span>, además por centro</td></tr>
+          <tr><td>Marcar y adjuntar el respaldo</td><td><span class="etq si">Sí</span></td><td><span class="etq si">Sí</span></td></tr>
+          <tr><td>Indicadores y gráficos</td><td><span class="etq no">No</span></td><td><span class="etq si">Sí</span></td></tr>
+          <tr><td>Comparar los once centros</td><td><span class="etq no">No</span></td><td><span class="etq si">Sí</span></td></tr>
+          <tr><td>Descargar la información</td><td><span class="etq no">No</span></td><td><span class="etq si">Sí</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>La supervisora entra a <strong>consultar y registrar</strong>. Las descargas quedan en Administración, para que la cartera no salga del tablero por decisión de un centro.</p>
+  </section>
+
+  <!-- 11 -->
+  <section class="lamina" data-sec="Uso">
+    <p class="seccion">En pantalla</p>
+    <h2>Lo que la herramienta resuelve</h2>
+    <div class="rejilla dos">
+      <div>
+        <h3>Para quien gestiona el cobro</h3>
+        <ul class="lista">
+          <li><strong>Antigüedad del saldo</strong>: qué tan vieja es cada deuda, que es lo que define por dónde empezar.</li>
+          <li>Filtros por plan o convenio, caja, fecha y estado de gestión.</li>
+          <li>Marcar varias facturas de una vez, con su observación.</li>
+          <li>Buscar sin tener que saber el número exacto.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Para quien dirige</h3>
+        <ul class="lista">
+          <li>Cuánto está pendiente y cómo evoluciona mes a mes.</li>
+          <li>Dónde está concentrado: por centro y por convenio.</li>
+          <li>Cuánto se ha gestionado y cuánto falta.</li>
+          <li>Comparación entre los once centros.</li>
+          <li>Los indicadores <strong>responden a los filtros</strong>. En el tablero anterior mostraban siempre el total, aunque se buscara un solo centro.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="lamina" data-sec="Entrega">
+    <p class="seccion">Qué se entrega</p>
+    <h2>Listo para operar y documentado</h2>
+    <div class="rejilla dos">
+      <div>
+        <h3>La herramienta</h3>
+        <p>Funcionando, con los once centros cargados y sus accesos. No requiere instalar nada: se abre en el navegador, en computador, tablet o celular.</p>
+      </div>
+      <div>
+        <h3>La documentación</h3>
+        <p>Cuatro guías que explican cómo está armado y cómo se mantiene, para que cualquier persona del área pueda tomarlo sin depender de quien lo construyó.</p>
+      </div>
+    </div>
+    <hr class="sep">
+    <div class="logro">
+      <h3>El objetivo del traspaso está cumplido</h3>
+      <p>Esto dejó de ser la herramienta de una persona. Está escrita, documentada y operando con los recursos de la empresa, no con la cuenta personal de nadie.</p>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="lamina" data-sec="Pendientes">
+    <p class="seccion">Lo que falta</p>
+    <h2>Cuatro decisiones que no dependen del desarrollo</h2>
+    <p>Ninguna impide usar el tablero hoy. Son las que definen que esto siga funcionando solo dentro de seis meses.</p>
+    <ol class="pasos">
+      <li><b>Mover el Excel a una carpeta del área.</b> Hoy está en el espacio personal de una persona. Si esa persona sale de la empresa, el tablero deja de actualizarse. Es el punto más urgente.</li>
+      <li><b>Que cada centro entre con su usuario de la empresa.</b> Hoy usamos una clave por centro, que alguien tiene que administrar. Con el usuario corporativo eso se elimina.</li>
+      <li><b>Usar una cuenta de la empresa y no una personal</b> para la conexión entre el tablero y la información.</li>
+      <li><b>Nombrar quién administra los accesos</b>: altas, bajas y cambios de clave de los once centros.</li>
+    </ol>
+  </section>
+
+  <!-- 14 -->
+  <section class="lamina" data-sec="Cierre">
+    <p class="seccion">Cierre</p>
+    <h2>Dónde queda el proyecto</h2>
+    <div class="rejilla tres">
+      <div class="cifra" style="border-color:var(--ok)"><span class="n">11</span><span class="t">centros, cada uno con su propia cartera</span></div>
+      <div class="cifra" style="border-color:var(--ok)"><span class="n">0</span><span class="t">datos de pacientes salen del área</span></div>
+      <div class="cifra" style="border-color:var(--ok)"><span class="n">0</span><span class="t">trabajo manual para mantenerlo al día</span></div>
+    </div>
+    <hr class="sep">
+    <div class="rejilla dos">
+      <div>
+        <h3>Lo que cambió de fondo</h3>
+        <p>Pasamos de un archivo que alguien tenía que regenerar y reenviar, a una herramienta que se mantiene sola. Y la gestión de cada centro dejó de ser una anotación privada para convertirse en un registro compartido, firmado y definitivo.</p>
+      </div>
+      <div>
+        <h3>Lo primero que hay que hacer</h3>
+        <p>Retirar de circulación el archivo anterior de 10 MB, que sigue guardado y compartido con los datos de pacientes adentro. No depende de nada de lo anterior y se puede hacer hoy mismo.</p>
+      </div>
+    </div>
+  </section>
+
+  </main>
+  <footer id="pie">
+    <span id="ruta">Entrega</span>
+    <div class="controles">
+      <select id="indice" aria-label="Ir a una lámina"></select>
+      <button class="nav" id="anterior" type="button" aria-label="Lámina anterior">&larr;</button>
+      <span id="cuenta" aria-live="polite">1 / 14</span>
+      <button class="nav" id="siguiente" type="button" aria-label="Lámina siguiente">&rarr;</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var laminas = Array.prototype.slice.call(document.querySelectorAll(".lamina"));
+  var total = laminas.length, i = 0;
+  var cuenta = document.getElementById("cuenta"),
+      ruta = document.getElementById("ruta"),
+      avance = document.getElementById("avance"),
+      indice = document.getElementById("indice"),
+      anterior = document.getElementById("anterior"),
+      siguiente = document.getElementById("siguiente"),
+      marco = document.getElementById("marco");
+
+  laminas.forEach(function(l, n){
+    var t = l.querySelector("h1, h2");
+    var o = document.createElement("option");
+    o.value = n;
+    o.textContent = (n + 1) + ". " + (t ? t.textContent : "Lámina " + (n + 1));
+    indice.appendChild(o);
+  });
+
+  function mostrar(n){
+    i = Math.max(0, Math.min(total - 1, n));
+    laminas.forEach(function(l, k){ l.classList.toggle("activa", k === i); });
+    cuenta.textContent = (i + 1) + " / " + total;
+    ruta.textContent = laminas[i].dataset.sec || "";
+    avance.style.width = ((i + 1) / total * 100) + "%";
+    indice.value = i;
+    anterior.disabled = i === 0;
+    siguiente.disabled = i === total - 1;
+    marco.scrollTop = 0;
+    laminas[i].scrollTop = 0;
+  }
+
+  siguiente.addEventListener("click", function(){ mostrar(i + 1); });
+  anterior.addEventListener("click", function(){ mostrar(i - 1); });
+  indice.addEventListener("change", function(){ mostrar(parseInt(indice.value, 10)); });
+
+  document.addEventListener("keydown", function(e){
+    if (e.target === indice) return;
+    if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") { e.preventDefault(); mostrar(i + 1); }
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); mostrar(i - 1); }
+    else if (e.key === "Home") { e.preventDefault(); mostrar(0); }
+    else if (e.key === "End") { e.preventDefault(); mostrar(total - 1); }
+    else if (e.key === "f" || e.key === "F") {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    }
+  });
+
+  mostrar(0);
+})();
+</script>
+</body>
+</html>
