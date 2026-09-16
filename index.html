@@ -270,7 +270,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 <div class="franja franja-demo oculto" id="franjaDemo">
   <span>⚠</span>
   <div><b>MODO DEMOSTRACIÓN.</b> Los datos son inventados y nada se guarda en SharePoint.
-  Para pasar a producción, poner <code>MODO_DEMO: true</code> y completar las tres URL en el bloque CONFIG.</div>
+  Para pasar a producción, poner <code>MODO_DEMO: false</code> y completar las tres URL en el bloque CONFIG.</div>
 </div>
 
 <div class="franja">
@@ -486,22 +486,22 @@ const CONFIG = {
   /* (1) Flujo «Autoconsumos - Verificar acceso».
          Recibe {centro, contrasena} y responde
          {ok, centro, rol, token, expira}.                              */
-  VERIFICAR_URL: "",
+  VERIFICAR_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/01/workflows/ecb920dad2a54bd6bc0aee6128464c98/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xKfQX67-KNNQnQGk7PEyuyr-vfaF_OpEAjmNtrF02rU",
 
   /* (2) Flujo «Autoconsumos - Obtener datos».
          Recibe {token} y responde {ok, centro, rol, corte, filas, marcas}. */
-  DATOS_URL: "",
+  DATOS_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/a8313f7b1c5a491c8e7923aa14e7c126/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=NKkbQ3oJ6n2Dq0chEdfg8QabakqX-_s7GZ7sW136HyY",
 
   /* (3) Flujo «Autoconsumos - Marcar facturas».
          Recibe {token, facturas:[{factura, observacion}]} y responde
          {ok, grabadas, rechazadas}.                                    */
-  MARCAR_URL: "",
+  MARCAR_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/83cdb549fa654f55991d5ed320769d13/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TI_jYl_szfF7HVArwKKaANjNZ5V53zmUwXxM28Vl_ks",
 
   /* (3b) Flujo «Autoconsumos - Subir respaldo».
           Recibe {token, archivos:[{factura, nombre, contenido}]} donde
           contenido es el PDF en base64, y responde {ok, grabadas, rechazadas}.
           Si se deja vacío, el tablero oculta la zona de adjuntos.      */
-  SUBIR_URL: "",
+  SUBIR_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/30/workflows/2626ec4fb14b4f85b644218729af775d/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Y1Ij-yL8fm35PnJXTqflp85yHDTUgUkDW1dJTHVJCVQ",
 
   /* (3b bis) Raíz del sitio de SharePoint. Solo se usa para armar el
           enlace del PDF cuando el flujo devuelve una ruta relativa.     */
@@ -533,7 +533,7 @@ const CONFIG = {
 
   /* (7) true = permite recorrer el tablero con datos inventados, sin
          flujos y sin escribir nada. Debe quedar en false en producción. */
-  MODO_DEMO: true
+  MODO_DEMO: false
 };
 
 /* =====================================================================
