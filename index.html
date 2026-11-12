@@ -311,8 +311,15 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         <option value="1">31 a 60 días</option><option value="2">61 a 90 días</option>
         <option value="3">Más de 90 días</option></select></div>
       <div class="campo" id="campoSeguimiento"><label for="fSeguimiento">Respaldo</label><select id="fSeguimiento">
-        <option value="">Todas</option><option value="conpdf">Con PDF</option>
-        <option value="sinpdf">Sin PDF</option></select></div>
+        <option value="">Todas</option>
+        <option value="conpdf">Con PDF</option>
+        <option value="sinpdf">Sin PDF</option>
+        <option value="confoto">Con foto</option>
+        <option value="sinfoto">Sin foto</option>
+        <option value="pdffoto">Con PDF y foto</option>
+        <option value="pdfsinfoto">Con PDF, sin foto</option>
+        <option value="fotosinpdf">Con foto, sin PDF</option>
+        <option value="nada">Sin PDF ni foto</option></select></div>
       <div class="campo"><label>&nbsp;</label>
         <div class="acciones">
           <button class="btn-2" id="btnLimpiar">Limpiar</button>
@@ -613,6 +620,21 @@ const puedeAdjuntar = () => puedeEntregar();
 const quienSoy = () => SESION ? (SESION.usuario || SESION.centro || "") : "";
 const pdfDe = f => (RESPALDOS[f] && RESPALDOS[f].pdf) || null;
 const fotosDe = f => (RESPALDOS[f] && RESPALDOS[f].fotos) || [];
+/* Filtro Respaldo: combinaciones de PDF y foto. */
+function cumpleRespaldo(f, seg){
+  const pdf = !!pdfDe(f), foto = fotosDe(f).length > 0;
+  switch (seg){
+    case "conpdf":     return pdf;
+    case "sinpdf":     return !pdf;
+    case "confoto":    return foto;
+    case "sinfoto":    return !foto;
+    case "pdffoto":    return pdf && foto;
+    case "pdfsinfoto": return pdf && !foto;
+    case "fotosinpdf": return foto && !pdf;
+    case "nada":       return !pdf && !foto;
+    default:           return true;
+  }
+}
 const ciudadDe = c => CONFIG.CENTROS_GUAYAQUIL.includes(c) ? "Guayaquil" : "Quito";
 
 /* ========================= Normalización de columnas =========================
@@ -959,8 +981,7 @@ function aplicar(){
     if (plan   && r.p !== plan)   return false;
     if (mes    && r.d.slice(0,7) !== mes) return false;
     if (tramo !== "" && String(r.tramo) !== tramo) return false;
-    if (seg === "conpdf" && !pdfDe(r.f)) return false;
-    if (seg === "sinpdf" && pdfDe(r.f)) return false;
+    if (seg && !cumpleRespaldo(r.f, seg)) return false;
     return true;
   });
   const liq = enLiquidadas();
@@ -1054,11 +1075,10 @@ function cambiarVista(vista){
   const analisis = VISTA === "analisis", liq = enLiquidadas();
   $("vistaDetalle").classList.toggle("oculto", analisis);
   $("vistaAnalisis").classList.toggle("oculto", !analisis);
-  /* En Liquidadas solo se mira: sin zona de carga, sin selección por lote
-     y sin filtro de respaldo (todas tienen PDF). */
+  /* En Liquidadas solo se mira: sin zona de carga ni selección por lote.
+     El filtro Respaldo se queda: todas tienen PDF, pero sirve por foto. */
   $("zonaPdf").classList.toggle("oculto", liq || !CONFIG.SUBIR_URL || !puedeAdjuntar());
   $("notaRegla").classList.toggle("oculto", liq);
-  $("campoSeguimiento").classList.toggle("oculto", liq);
   if (liq) seleccion.clear();
   aplicar();
 }
