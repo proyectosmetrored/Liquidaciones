@@ -1,5 +1,16 @@
 # 2 · Los flujos de Power Automate
 
+> **Nota de noviembre de 2026.** Este documento explica, acción por acción,
+> los flujos tal como se armaron en septiembre de 2026. Desde entonces
+> **los flujos se generan con programas** (`flujos/construir_obtener_datos.py`,
+> `construir_marcar_facturas.py`, `construir_adjuntar_respaldo.py`,
+> `construir_reportar_corrida.py`) que producen un paquete `.zip` para
+> «Importar paquete». Ese código es la definición de referencia; este documento
+> sigue siendo útil para entender la lógica y los nombres de las acciones.
+> El flujo «Subir respaldo» (3b) fue reemplazado por «Adjuntar respaldo», que
+> **no marca** la factura. Lo que entra y sale de cada flujo está en
+> [`03-contrato.md`](03-contrato.md).
+
 Tres flujos obligatorios y dos opcionales. Todos se crean desde
 **Power Automate → Crear → Flujo de nube instantáneo → Solicitud HTTP recibida**.
 

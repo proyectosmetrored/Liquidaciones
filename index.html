@@ -131,6 +131,16 @@ tbody tr.bloqueada:hover{background:#F1F7F3}
 .lote button{height:32px;font-size:12px}
 .btn-marcar{height:28px;padding:0 11px;font-size:11.5px;background:var(--azul);color:#fff}
 .btn-marcar:hover{background:#06679F}
+.btn-marcar:disabled{background:#CBD5E1;color:#334155;opacity:1;cursor:not-allowed}
+.btn-foto{height:26px;padding:0 9px;font-size:11px;background:#fff;color:var(--azul);border:1px solid var(--azul-claro);margin-top:4px}
+.btn-foto:hover{background:var(--azul-suave)}
+.resp{white-space:nowrap;font-size:12px}
+.resp a{color:var(--azul);text-decoration:none;font-weight:600}
+.resp a:hover{text-decoration:underline}
+.resp .fotos a{font-weight:400;margin-right:3px}
+.vista-previa{display:block;max-width:100%;max-height:220px;margin:8px auto 0;border-radius:8px;border:1px solid var(--linea)}
+.modal-cabeza.azul{background:var(--azul-suave);border-bottom-color:var(--azul-borde)}
+.modal-cabeza.azul h3{color:var(--azul)}
 
 .paginacion{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--tinta-2)}
 .paginacion .grupo{display:flex;gap:7px;align-items:center}
@@ -235,19 +245,19 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     <div class="login-caja">
       <div class="login-icono">🏥</div>
       <h2>Autoconsumos</h2>
-      <p class="pista">Elige tu centro y escribe la contraseña.</p>
+      <p class="pista">Escribe tu usuario y tu contraseña.</p>
 
-      <label for="centro">Centro médico</label>
-      <input id="centro" autocomplete="off" placeholder="🔎 Escribe o elige tu centro">
+      <label for="centro">Usuario</label>
+      <input id="centro" autocomplete="off" placeholder="🔎 Tu usuario o tu centro">
 
       <label for="clave" style="margin-top:14px">Contraseña</label>
-      <input id="clave" type="password" autocomplete="off" placeholder="Contraseña del centro">
+      <input id="clave" type="password" autocomplete="off" placeholder="Contraseña">
 
       <button class="btn-1" id="btnEntrar">Entrar</button>
       <div id="loginErr" class="login-err oculto"></div>
       <div id="loginDemo" class="login-demo oculto"></div>
     </div>
-    <p class="login-pie">Cada centro entra con su propia contraseña y ve únicamente su cartera.</p>
+    <p class="login-pie">Cada usuario entra con su propia contraseña y ve únicamente la cartera de su centro.</p>
   </div>
 </div>
 
@@ -275,8 +285,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
 <div class="franja">
   <span>⚠</span>
-  <div><b>Información interna confidencial.</b> El marcado de una factura queda registrado con el centro,
-  la fecha y la hora, y <b>no se puede deshacer</b>.</div>
+  <div><b>Información interna confidencial.</b> La entrega de una factura queda registrada con el usuario,
+  la fecha y la hora, y <b>no se puede deshacer</b>. Los respaldos (PDF y fotos) tampoco se borran desde el tablero.</div>
 </div>
 
 <!-- Mientras llegan los datos -->
@@ -292,6 +302,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     <div class="filtros">
       <div class="campo"><label for="fBusqueda">Buscar</label>
         <input type="text" id="fBusqueda" placeholder="Factura, convenio, caja…" autocomplete="off"></div>
+      <div class="campo oculto" id="campoCiudad"><label for="fCiudad">Ciudad</label><select id="fCiudad"></select></div>
       <div class="campo oculto" id="campoCentro"><label for="fCentro">Centro</label><select id="fCentro"></select></div>
       <div class="campo"><label for="fMes">Mes de emisión</label><select id="fMes"></select></div>
       <div class="campo"><label for="fPlan">Plan / Convenio</label><select id="fPlan"></select></div>
@@ -300,8 +311,9 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         <option value="1">31 a 60 días</option><option value="2">61 a 90 días</option>
         <option value="3">Más de 90 días</option></select></div>
       <div class="campo"><label for="fSeguimiento">Gestión</label><select id="fSeguimiento">
-        <option value="">Todas</option><option value="si">Ya marcadas</option>
-        <option value="no">Sin marcar</option></select></div>
+        <option value="">Todas</option><option value="si">Entregadas</option>
+        <option value="no">Sin entregar</option><option value="conpdf">Con PDF, sin entregar</option>
+        <option value="sinpdf">Sin PDF</option></select></div>
       <div class="campo"><label>&nbsp;</label>
         <div class="acciones">
           <button class="btn-2" id="btnLimpiar">Limpiar</button>
@@ -316,9 +328,11 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   <section class="avance-barra" id="avanceBarra">
     <div class="dato"><span>Pendientes</span><b id="cTotal">0</b></div>
     <div class="sep"></div>
-    <div class="dato"><span>Ya marcadas</span><b id="cMarcadas">0</b></div>
+    <div class="dato"><span>Entregadas</span><b id="cMarcadas">0</b></div>
     <div class="sep"></div>
-    <div class="dato"><span>Sin marcar</span><b id="cSinMarcar">0</b></div>
+    <div class="dato"><span>Sin entregar</span><b id="cSinMarcar">0</b></div>
+    <div class="sep"></div>
+    <div class="dato"><span>Con PDF</span><b id="cConPdf">0</b></div>
     <div class="sep"></div>
     <div class="progreso">
       <div class="riel"><i id="cRiel" style="width:0%"></i></div>
@@ -334,21 +348,22 @@ svg{display:block;width:100%;height:auto;overflow:visible}
        así que no hace falta abrir el PDF ni ninguna librería externa. -->
   <div class="zona-pdf" id="zonaPdf">
     <div class="texto">
-      <b>Adjuntar respaldos en PDF</b>
+      <b>Adjuntar PDF de respaldo</b>
       Arrastra los archivos aquí o elígelos. Cada PDF debe llamarse con el número de
-      factura — <span class="mono">013-111-000024730.pdf</span>. Las facturas reconocidas
-      se marcan de forma definitiva.
+      factura — <span class="mono">013-111-000024730.pdf</span>. Adjuntar <b>no entrega</b>
+      la factura: después la revisas y la entregas desde la tabla.
     </div>
     <input type="file" id="archivosPdf" accept="application/pdf,.pdf" multiple hidden>
+    <input type="file" id="archivoFoto" accept="image/*" capture="environment" hidden>
     <button class="btn-1" id="btnElegirPdf">Elegir archivos…</button>
     <div class="resumen-pdf" id="resumenPdf"></div>
   </div>
 
   <div id="mensajePanel"></div>
 
-  <p class="nota-regla"><b>El marcado es compartido.</b> Lo que registra un centro lo ven todos
-  de inmediato: queda guardado en SharePoint, no en este navegador. Por eso mismo
-  <b>no se puede corregir ni borrar</b> — revise antes de confirmar.</p>
+  <p class="nota-regla"><b>Para entregar una factura hace falta su PDF.</b> El robot los carga cada
+  noche desde EC Datos; si falta alguno, adjúntalo aquí o toma una foto desde la fila. La entrega queda
+  guardada en SharePoint a nombre de quien la registra y <b>no se puede corregir ni borrar</b> — revisa antes de confirmar.</p>
 
   <div class="pestanas" id="pestanas">
     <button class="activa" data-vista="detalle">Detalle de facturas</button>
@@ -362,7 +377,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
           <div class="lote" id="barraLote" style="display:none">
             <b id="loteConteo">0 seleccionadas</b>
-            <button class="btn-1" id="btnLoteMarcar">Registrar marcado…</button>
+            <button class="btn-1" id="btnLoteMarcar">Entregar seleccionadas…</button>
             <button class="btn-2" id="btnLoteObs">Anotar en todas…</button>
             <button class="btn-2" id="btnLoteLimpiar">Deseleccionar</button>
           </div>
@@ -379,7 +394,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
                 <th class="ordenable num" data-col="v">Valor <span class="flecha">↕</span></th>
                 <th class="ordenable num" data-col="s">Saldo <span class="flecha">↕</span></th>
                 <th class="ordenable" data-col="dias">Antigüedad <span class="flecha">↕</span></th>
-                <th style="width:112px">Gestión</th>
+                <th>Respaldo</th>
+                <th style="width:120px">Gestión</th>
                 <th>Observación</th>
               </tr></thead>
               <tbody id="cuerpoTabla"></tbody>
@@ -437,7 +453,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         </div>
         <div class="grafico">
           <h3>Avance de gestión</h3>
-          <p class="nota">Facturas marcadas frente a las que aún no lo están</p>
+          <p class="nota">Facturas entregadas frente a las que aún no lo están</p>
           <div id="gAvance"></div>
         </div>
       </div>
@@ -489,7 +505,8 @@ const CONFIG = {
   VERIFICAR_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/01/workflows/ecb920dad2a54bd6bc0aee6128464c98/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xKfQX67-KNNQnQGk7PEyuyr-vfaF_OpEAjmNtrF02rU",
 
   /* (2) Flujo «Autoconsumos - Obtener datos».
-         Recibe {token} y responde {ok, centro, rol, corte, filas, marcas}. */
+         Recibe {token} y responde {ok, usuario, centro, rol, corte, filas,
+         marcas, respaldos, avisos}.                                    */
   DATOS_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/a8313f7b1c5a491c8e7923aa14e7c126/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=NKkbQ3oJ6n2Dq0chEdfg8QabakqX-_s7GZ7sW136HyY",
 
   /* (3) Flujo «Autoconsumos - Marcar facturas».
@@ -497,11 +514,12 @@ const CONFIG = {
          {ok, grabadas, rechazadas}.                                    */
   MARCAR_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/23/workflows/83cdb549fa654f55991d5ed320769d13/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=TI_jYl_szfF7HVArwKKaANjNZ5V53zmUwXxM28Vl_ks",
 
-  /* (3b) Flujo «Autoconsumos - Subir respaldo».
-          Recibe {token, archivos:[{factura, nombre, contenido}]} donde
-          contenido es el PDF en base64, y responde {ok, grabadas, rechazadas}.
+  /* (3b) Flujo «Autoconsumos - Adjuntar respaldo».
+          Recibe {token, archivos:[{factura, tipo, nombre, contenido, reemplazar}]}
+          donde contenido es el archivo en base64 y tipo es PDF o FOTO.
+          Responde {ok, grabados, rechazados}. No marca nada.
           Si se deja vacío, el tablero oculta la zona de adjuntos.      */
-  SUBIR_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/30/workflows/2626ec4fb14b4f85b644218729af775d/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=Y1Ij-yL8fm35PnJXTqflp85yHDTUgUkDW1dJTHVJCVQ",
+  SUBIR_URL: "https://default480bd49c6f894faab39ec7728d95d1.30.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/01/workflows/dc257b7c84de4db39d1b2ec3102595ae/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=gE5ypf0TmlJv4P5AgHEKGgbx9pCWZexev66psrjWqNI",
 
   /* (3b bis) Raíz del sitio de SharePoint. Solo se usa para armar el
           enlace del PDF cuando el flujo devuelve una ruta relativa.     */
@@ -515,6 +533,18 @@ const CONFIG = {
           rechaza cuerpos muy grandes y la espera se vuelve eterna.     */
   MB_POR_ARCHIVO: 8,
   MB_POR_LOTE: 25,
+
+  /* (3d) Archivos por llamada al flujo de adjuntos (cada uno tarda unos
+          4 s en SharePoint y el flujo debe responder antes de 120 s).  */
+  LOTE_ARCHIVOS: 10,
+
+  /* (3e) Lado mayor de las fotos, en píxeles. El navegador las reduce
+          antes de subirlas para que pesen poco.                        */
+  FOTO_MAX_PX: 1600,
+
+  /* (3f) Centros de Guayaquil, con el nombre que traen las filas. Los
+          demás se consideran de Quito. Sirve para el filtro Ciudad.    */
+  CENTROS_GUAYAQUIL: ["Kennedy","Alborada","Ciudad Celeste"],
 
   /* (4) Flujo opcional que devuelve la lista de centros para el
          desplegable. Si se deja vacío, se usa CENTROS_RESPALDO.        */
@@ -565,13 +595,25 @@ function selloLegible(iso){
 }
 
 /* ========================= Estado de la sesión ========================= */
-let SESION = null;              // {centro, rol, token, expira}
+let SESION = null;              // {usuario, centro, ciudad, rol, token, expira}
 let FECHA_CORTE = "—";          // fecha del archivo de origen, no del reloj local
 let CORTE_MS = 0;
 let DATOS = [];                 // filas normalizadas
 let MARCAS = {};                // {FACTURA: {centro, obs, por, en}}
+let RESPALDOS = {};             // {FACTURA: {pdf: {n,u,o,e}|null, fotos: [{n,u,o,e}]}}
+let AVISOS = {};                // {FACTURA: {e, k}}  el robot no la encontró en EC Datos
 const BORRADORES = {};          // observaciones escritas y todavía no confirmadas
-const esAdmin = () => SESION && SESION.rol === "ADMIN";
+const rolSesion = () => (SESION && SESION.rol) || "CENTRO";
+const esAdmin = () => rolSesion() === "ADMIN";
+const esOperaciones = () => rolSesion() === "OPERACIONES";
+/* ADMIN y OPERACIONES ven todos los centros; solo ADMIN y CENTRO escriben. */
+const vistaAmplia = () => esAdmin() || esOperaciones();
+const puedeEntregar = () => esAdmin() || rolSesion() === "CENTRO";
+const puedeAdjuntar = () => puedeEntregar();
+const quienSoy = () => SESION ? (SESION.usuario || SESION.centro || "") : "";
+const pdfDe = f => (RESPALDOS[f] && RESPALDOS[f].pdf) || null;
+const fotosDe = f => (RESPALDOS[f] && RESPALDOS[f].fotos) || [];
+const ciudadDe = c => CONFIG.CENTROS_GUAYAQUIL.includes(c) ? "Guayaquil" : "Quito";
 
 /* ========================= Normalización de columnas =========================
    El flujo entrega las filas tal como vienen del Excel. Aquí se reconocen
@@ -699,7 +741,7 @@ function borrarSesion(){
 }
 
 function salir(motivo){
-  SESION = null; DATOS = []; MARCAS = {}; seleccion.clear();
+  SESION = null; DATOS = []; MARCAS = {}; RESPALDOS = {}; AVISOS = {}; seleccion.clear();
   borrarSesion();
   $("vApp").classList.add("oculto");
   $("vLogin").classList.remove("oculto");
@@ -720,7 +762,7 @@ async function entrar(){
   $("loginErr").classList.add("oculto");
 
   if (!centro || !clave){
-    errorLogin("Elige tu centro y escribe la contraseña.");
+    errorLogin("Escribe tu usuario y tu contraseña.");
     return;
   }
 
@@ -730,7 +772,7 @@ async function entrar(){
   let data = null;
   try {
     data = CONFIG.MODO_DEMO ? demoVerificar(centro, clave)
-                            : await llamar(CONFIG.VERIFICAR_URL, {centro: centro, contrasena: clave});
+                            : await llamar(CONFIG.VERIFICAR_URL, {usuario: centro, centro: centro, contrasena: clave});
   } catch(e){
     btn.disabled = false; btn.textContent = "Entrar";
     errorLogin("No se pudo conectar. Revisa tu internet e inténtalo de nuevo.");
@@ -740,7 +782,12 @@ async function entrar(){
   btn.disabled = false; btn.textContent = "Entrar";
 
   if (!data || !data.ok){
-    errorLogin("Centro o contraseña incorrectos.");
+    errorLogin("Usuario o contraseña incorrectos.");
+    $("clave").value = "";
+    return;
+  }
+  if (String(data.rol || "").toUpperCase() === "RPA"){
+    errorLogin("Ese usuario es solo para el robot, no para el tablero.");
     $("clave").value = "";
     return;
   }
@@ -748,7 +795,8 @@ async function entrar(){
   /* La contraseña no se guarda en ningún lado: a partir de aquí solo
      viaja el token que emitió el flujo. */
   $("clave").value = "";
-  SESION = {centro: data.centro || centro, rol: data.rol || "CENTRO",
+  SESION = {usuario: data.usuario || centro, centro: data.centro || centro,
+            ciudad: data.ciudad || "", rol: data.rol || "CENTRO",
             token: data.token, expira: data.expira || ""};
   guardarSesion(SESION);
   await abrirApp();
@@ -758,22 +806,25 @@ async function abrirApp(){
   $("vLogin").classList.add("oculto");
   $("vApp").classList.remove("oculto");
   $("franjaDemo").classList.toggle("oculto", !CONFIG.MODO_DEMO);
-  $("quien").innerHTML = "📍 " + esc(SESION.centro) +
-    (esAdmin() ? ' <i>· todos los centros</i>' : "");
+  const detalle = esAdmin() ? "todos los centros"
+                : esOperaciones() ? "Operaciones · solo consulta"
+                : (SESION.centro && SESION.centro !== quienSoy() ? SESION.centro : "");
+  $("quien").innerHTML = "👤 " + esc(quienSoy()) + (detalle ? " <i>· " + esc(detalle) + "</i>" : "");
   /* Una supervisora de centro ve solo consultar y registrar: los filtros,
-     la tabla y el marcado. Sin indicadores, sin análisis y sin descargas.
-     Todo eso queda reservado a quien entra con rol ADMIN. */
-  const admin = esAdmin();
-  $("campoCentro").classList.toggle("oculto", !admin);
-  $("tarjetaCentros").classList.toggle("oculto", !admin);
-  $("cajaCentros").classList.toggle("oculto", !admin);
-  $("kpis").classList.toggle("oculto", !admin);
-  $("pestanas").classList.toggle("oculto", !admin);
-  $("panelDescargas").classList.toggle("oculto", !admin);
-  /* Adjuntar respaldos lo pueden hacer los dos roles. La zona solo
+     la tabla y la entrega. Sin indicadores, sin análisis y sin descargas.
+     ADMIN y OPERACIONES ven todos los centros; OPERACIONES no toca nada. */
+  const amplio = vistaAmplia();
+  $("campoCentro").classList.toggle("oculto", !amplio);
+  $("campoCiudad").classList.toggle("oculto", !amplio);
+  $("tarjetaCentros").classList.toggle("oculto", !amplio);
+  $("cajaCentros").classList.toggle("oculto", !amplio);
+  $("kpis").classList.toggle("oculto", !amplio);
+  $("pestanas").classList.toggle("oculto", !amplio);
+  $("panelDescargas").classList.toggle("oculto", !esAdmin());
+  /* Adjuntar respaldos lo hacen ADMIN y los centros. La zona solo
      aparece si existe el flujo que los recibe. */
-  $("zonaPdf").classList.toggle("oculto", !CONFIG.SUBIR_URL);
-  if (!admin){
+  $("zonaPdf").classList.toggle("oculto", !CONFIG.SUBIR_URL || !puedeAdjuntar());
+  if (!amplio){
     $("vistaDetalle").classList.remove("oculto");
     $("vistaAnalisis").classList.add("oculto");
   }
@@ -815,7 +866,25 @@ async function cargarDatos(){
     const f = String(m.factura || m.Title || "").trim().toUpperCase();
     if (f) MARCAS[f] = {centro: m.centro || "", obs: m.observacion || "",
                         por: m.marcadoPor || m.centro || "", en: m.marcadoEn || "",
-                        pdf: enlaceRespaldo(m.id, m.respaldo)};
+                        pdf: enlaceMarca(m.id, m.respaldo)};
+  });
+
+  /* Respaldos de la biblioteca: un PDF por factura y cuantas fotos haya. */
+  RESPALDOS = {};
+  (data.respaldos || []).forEach(x => {
+    const f = String(x.f || "").trim().toUpperCase();
+    if (!f) return;
+    const e = RESPALDOS[f] || (RESPALDOS[f] = {pdf: null, fotos: []});
+    const item = {n: x.n || "", u: x.u || "", o: x.o || "", e: x.e || ""};
+    if (String(x.t || "PDF").toUpperCase() === "FOTO") e.fotos.push(item);
+    else if (!e.pdf || Date.parse(item.e || 0) > Date.parse(e.pdf.e || 0)) e.pdf = item;
+  });
+  /* Avisos del robot: la factura no apareció en EC Datos. Vienen del más
+     reciente al más antiguo; se guarda el primero de cada factura. */
+  AVISOS = {};
+  (data.avisos || []).forEach(x => {
+    const f = String(x.f || "").trim().toUpperCase();
+    if (f && !AVISOS[f]) AVISOS[f] = {e: x.e || "", k: x.k || ""};
   });
 
   FECHA_CORTE = data.corte || "—";
@@ -833,10 +902,10 @@ async function cargarDatos(){
 
 /* ========================= Filtros ========================= */
 const POR_PAGINA = 100;
-const CAMPOS = ["fBusqueda","fCentro","fMes","fPlan","fAntiguedad","fSeguimiento"];
-const ETIQUETAS = {fBusqueda:"Búsqueda", fCentro:"Centro", fMes:"Mes",
+const CAMPOS = ["fBusqueda","fCiudad","fCentro","fMes","fPlan","fAntiguedad","fSeguimiento"];
+const ETIQUETAS = {fBusqueda:"Búsqueda", fCiudad:"Ciudad", fCentro:"Centro", fMes:"Mes",
                    fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Gestión"};
-const CLAVE_FILTROS = "autoconsumos.filtros.v3";
+const CLAVE_FILTROS = "autoconsumos.filtros.v4";
 let filtrados = [], pagina = 1, orden = {col:"dias", asc:false};
 const seleccion = new Set();
 
@@ -847,6 +916,7 @@ function llenar(id, valores, todos, formato){
     o.textContent = formato ? formato(v) : v; s.appendChild(o); });
 }
 function inicializarFiltros(){
+  llenar("fCiudad", [...new Set(DATOS.map(r => ciudadDe(r.c)))].sort(), "Todas las ciudades");
   llenar("fCentro", unicos("c"), "Todos los centros");
   llenar("fPlan",   unicos("p"), "Todos los planes");
   const meses = [...new Set(DATOS.map(r => r.d.slice(0,7)).filter(Boolean))].sort();
@@ -871,16 +941,19 @@ function guardarFiltros(){
 
 function aplicar(){
   const texto  = $("fBusqueda").value.trim().toUpperCase();
-  const centro = $("fCentro").value, mes = $("fMes").value;
+  const centro = $("fCentro").value, mes = $("fMes").value, ciudad = $("fCiudad").value;
   const plan   = $("fPlan").value, tramo = $("fAntiguedad").value, seg = $("fSeguimiento").value;
   filtrados = DATOS.filter(r => {
     if (texto && !(r.f.toUpperCase().includes(texto) || r.p.toUpperCase().includes(texto) || r.u.toUpperCase().includes(texto))) return false;
+    if (ciudad && ciudadDe(r.c) !== ciudad) return false;
     if (centro && r.c !== centro) return false;
     if (plan   && r.p !== plan)   return false;
     if (mes    && r.d.slice(0,7) !== mes) return false;
     if (tramo !== "" && String(r.tramo) !== tramo) return false;
     if (seg === "si" && !MARCAS[r.f]) return false;
     if (seg === "no" &&  MARCAS[r.f]) return false;
+    if (seg === "conpdf" && (MARCAS[r.f] || !pdfDe(r.f))) return false;
+    if (seg === "sinpdf" && pdfDe(r.f)) return false;
     return true;
   });
   ordenar();
@@ -918,7 +991,7 @@ function ordenar(){
 
 /* ========================= Indicadores ========================= */
 function pintarKpis(){
-  if (!esAdmin()) return;              // los centros no ven indicadores
+  if (!vistaAmplia()) return;          // los centros no ven indicadores
   const total = filtrados.length;
   const pend  = filtrados.reduce((a,r) => a + r.s, 0);
   const valor = filtrados.reduce((a,r) => a + r.v, 0);
@@ -950,6 +1023,7 @@ function actualizarContadores(){
   $("cTotal").textContent     = entero(DATOS.length);
   $("cMarcadas").textContent  = entero(marcadas);
   $("cSinMarcar").textContent = entero(DATOS.length - marcadas);
+  $("cConPdf").textContent    = entero(DATOS.filter(r => pdfDe(r.f)).length);
   /* Sobre la cartera completa, no sobre lo filtrado: el avance de una
      supervisora no cambia porque acote la vista a un convenio. */
   const pct = DATOS.length ? marcadas / DATOS.length * 100 : 0;
@@ -974,32 +1048,58 @@ function pintarTabla(){
     dinero(filtrados.reduce((a,r)=>a+r.s,0));
 
   if (!total){
-    $("cuerpoTabla").innerHTML = '<tr><td colspan="11" class="vacio">No se encontraron facturas con los filtros aplicados.</td></tr>';
+    $("cuerpoTabla").innerHTML = '<tr><td colspan="12" class="vacio">No se encontraron facturas con los filtros aplicados.</td></tr>';
   } else {
     $("cuerpoTabla").innerHTML = trozo.map(r => {
       const marca = MARCAS[r.f], sel = seleccion.has(r.f);
+      const pdf = pdfDe(r.f), fotos = fotosDe(r.f), aviso = AVISOS[r.f];
       const clase = marca ? " class=\"bloqueada\"" : (sel ? ' class="seleccionada"' : "");
       const pastillaEdad = r.tramo === 3 ? "p-viejo" : "p-no";
 
-      /* El respaldo se abre en otra pestaña; SharePoint pide la sesión
-         del usuario, así que quien no tenga permiso no lo verá. */
-      const adjunto = marca && marca.pdf
+      /* Columna Respaldo: el PDF (del robot o subido a mano), las fotos y
+         el botón para tomar una. Los enlaces abren en otra pestaña;
+         SharePoint pide la sesión del usuario, así que quien no tenga
+         permiso no los verá. */
+      let celdaResp = pdf
+        ? '<a href="' + esc(urlRespaldo(pdf.u)) + '" target="_blank" rel="noopener noreferrer" title="' +
+          esc(pdf.n) + '">📄 PDF</a><span class="sello">' + esc(pdf.o || "") +
+          (pdf.e ? (pdf.o ? " · " : "") + esc(selloLegible(pdf.e)) : "") + "</span>"
+        : (aviso
+            ? '<span class="pastilla p-aviso" title="El robot no encontró esta factura en EC Datos">' +
+              "No encontrada en EC Datos" + (aviso.e ? " · " + esc(selloLegible(aviso.e).slice(0,5)) : "") + "</span>"
+            : '<span class="pastilla p-mal">Sin PDF</span>');
+      if (fotos.length)
+        celdaResp += '<span class="sello fotos">📷 ' + fotos.map((x,i) =>
+          '<a href="' + esc(urlRespaldo(x.u)) + '" target="_blank" rel="noopener noreferrer" title="' +
+          esc(x.n) + '">foto ' + (i+1) + "</a>").join(" ") + "</span>";
+      if (puedeAdjuntar())
+        celdaResp += '<br><button class="btn-foto" data-foto="' + esc(r.f) + '" title="Tomar o elegir una foto de respaldo">📷 Foto</button>';
+
+      /* Registro antiguo: el PDF iba adjunto a la fila de la lista. */
+      const adjunto = marca && marca.pdf && !pdf
         ? ' <a class="adjunto" href="' + esc(marca.pdf) + '" target="_blank" ' +
           'rel="noopener noreferrer" title="Ver el respaldo en PDF">📎</a>' : "";
 
       const celdaGestion = marca
-        ? '<span class="pastilla p-ok">🔒 Marcada</span>' + adjunto +
+        ? '<span class="pastilla p-ok">🔒 Entregada</span>' + adjunto +
           '<span class="sello">' + esc(marca.por || marca.centro) +
           (marca.en ? "<br>" + esc(selloLegible(marca.en)) : "") + "</span>"
-        : '<button class="btn-marcar" data-marcar="' + esc(r.f) + '">Marcar</button>';
+        : !puedeEntregar()
+          ? '<span class="pastilla p-no">Pendiente</span>'
+          : pdf
+            ? '<button class="btn-marcar" data-marcar="' + esc(r.f) + '">Entregar</button>'
+            : '<button class="btn-marcar" disabled title="Adjunta el PDF para poder entregar">Falta el PDF</button>';
 
       const celdaObs = marca
         ? '<span class="obs-fija' + (marca.obs ? "" : " sin") + '">' + esc(marca.obs || "Sin observación") + "</span>"
-        : '<input type="text" class="obs' + (BORRADORES[r.f] ? " lleno" : "") + '" data-obs="' + esc(r.f) +
-          '" value="' + esc(BORRADORES[r.f] || "") + '" placeholder="Anotar antes de marcar…" maxlength="300">';
+        : !puedeEntregar()
+          ? '<span class="obs-fija sin">—</span>'
+          : '<input type="text" class="obs' + (BORRADORES[r.f] ? " lleno" : "") + '" data-obs="' + esc(r.f) +
+            '" value="' + esc(BORRADORES[r.f] || "") + '" placeholder="Anotar antes de entregar…" maxlength="300">';
 
+      const seleccionable = !marca && pdf && puedeEntregar();
       return "<tr" + clase + ">" +
-        '<td>' + (marca ? "" :
+        '<td>' + (!seleccionable ? "" :
           '<input type="checkbox" class="chk sel" data-sel="' + esc(r.f) + '"' + (sel?" checked":"") + ">") + "</td>" +
         "<td>" + esc(r.c) + "</td>" +
         '<td class="mono">' + esc(r.f) + "</td>" +
@@ -1009,15 +1109,17 @@ function pintarTabla(){
         '<td class="num">' + dinero(r.v) + "</td>" +
         '<td class="num">' + dinero(r.s) + "</td>" +
         '<td><span class="pastilla ' + pastillaEdad + '">' + entero(r.dias) + " días</span></td>" +
+        '<td class="resp">' + celdaResp + "</td>" +
         "<td>" + celdaGestion + "</td>" +
         "<td>" + celdaObs + "</td>" +
       "</tr>";
     }).join("");
   }
 
-  const marcables = trozo.filter(r => !MARCAS[r.f]);
+  const marcables = puedeEntregar() ? trozo.filter(r => !MARCAS[r.f] && pdfDe(r.f)) : [];
   $("chkTodas").checked  = marcables.length > 0 && marcables.every(r => seleccion.has(r.f));
   $("chkTodas").disabled = marcables.length === 0;
+  $("chkTodas").style.visibility = puedeEntregar() ? "" : "hidden";
   $("infoPagina").innerHTML = total
     ? "Mostrando <b>" + entero(desde+1) + "</b>–<b>" + entero(Math.min(desde+POR_PAGINA,total)) + "</b> de <b>" + entero(total) + "</b>"
     : "Sin resultados";
@@ -1055,7 +1157,9 @@ function conectarTabla(){
   });
   cuerpo.addEventListener("click", ev => {
     const b = ev.target.closest("[data-marcar]");
-    if (b) pedirConfirmacion([b.dataset.marcar]);
+    if (b){ pedirConfirmacion([b.dataset.marcar]); return; }
+    const fo = ev.target.closest("[data-foto]");
+    if (fo) pedirFoto(fo.dataset.foto);
   });
   document.querySelectorAll("thead th.ordenable").forEach(th => th.onclick = () => {
     const col = th.dataset.col;
@@ -1065,7 +1169,7 @@ function conectarTabla(){
   $("chkTodas").onchange = ev => {
     const desde = (pagina-1)*POR_PAGINA;
     filtrados.slice(desde, desde+POR_PAGINA)
-      .filter(r => !MARCAS[r.f])
+      .filter(r => !MARCAS[r.f] && pdfDe(r.f))
       .forEach(r => ev.target.checked ? seleccion.add(r.f) : seleccion.delete(r.f));
     pintarTabla();
   };
@@ -1079,9 +1183,17 @@ function conectarTabla(){
 function cerrarModal(){ $("zonaModal").innerHTML = ""; }
 
 function pedirConfirmacion(facturas){
-  /* Nunca se reenvía algo que ya está marcado. */
-  const nuevas = facturas.filter(f => !MARCAS[f]);
-  if (!nuevas.length){ avisoPanel("Esas facturas ya estaban marcadas.", false); return; }
+  if (!puedeEntregar()){ avisoPanel("Tu usuario solo puede consultar.", false); return; }
+  /* Nunca se reenvía algo que ya está entregado, y sin PDF no se entrega. */
+  const pendientes = facturas.filter(f => !MARCAS[f]);
+  if (!pendientes.length){ avisoPanel("Esas facturas ya estaban entregadas.", false); return; }
+  const nuevas = pendientes.filter(f => pdfDe(f));
+  const sinPdf = pendientes.length - nuevas.length;
+  if (!nuevas.length){
+    avisoPanel("Ninguna tiene PDF. Adjunta el respaldo antes de entregar.", false);
+    pendientes.forEach(f => seleccion.delete(f)); pintarTabla();
+    return;
+  }
 
   const filas = nuevas.map(f => {
     const obs = BORRADORES[f] || "";
@@ -1091,18 +1203,19 @@ function pedirConfirmacion(facturas){
 
   $("zonaModal").innerHTML =
     '<div class="velo" id="velo"><div class="modal">' +
-      '<div class="modal-cabeza"><h3>⚠ Marcado definitivo</h3></div>' +
+      '<div class="modal-cabeza"><h3>⚠ Entrega definitiva</h3></div>' +
       '<div class="modal-cuerpo">' +
         '<p class="subrayado">Esta acción no se puede deshacer. Una vez registrada, ni tú ni ' +
         'Tecnología pueden cambiarla ni borrarla.</p>' +
-        "<p>Se registrará a nombre de <b>" + esc(SESION.centro) + "</b>, con la fecha y la hora del servidor, " +
+        "<p>Se registrará a nombre de <b>" + esc(quienSoy()) + "</b>, con la fecha y la hora del servidor, " +
         "y quedará visible para todos los centros.</p>" +
         "<p><b>" + entero(nuevas.length) + "</b> factura(s):</p>" +
         '<div class="modal-lista">' + filas + "</div>" +
+        (sinPdf ? "<p style=\"margin-top:12px\"><b>" + entero(sinPdf) + "</b> seleccionada(s) quedan fuera porque no tienen PDF.</p>" : "") +
       "</div>" +
       '<div class="modal-pie">' +
         '<button class="btn-2" id="btnCancelarMarca">Cancelar</button>' +
-        '<button class="btn-peligro" id="btnConfirmarMarca">Sí, marcar definitivamente</button>' +
+        '<button class="btn-peligro" id="btnConfirmarMarca">Sí, entregar definitivamente</button>' +
       "</div>" +
     "</div></div>";
 
@@ -1123,9 +1236,9 @@ async function confirmarMarca(facturas){
     data = CONFIG.MODO_DEMO ? demoMarcar(carga)
                             : await llamar(CONFIG.MARCAR_URL, {token: SESION.token, facturas: carga}, 2);
   } catch(e){
-    btn.disabled = false; btn.textContent = "Sí, marcar definitivamente";
+    btn.disabled = false; btn.textContent = "Sí, entregar definitivamente";
     $("btnCancelarMarca").disabled = false;
-    avisoPanel("No se pudo registrar: falló la conexión. No se marcó ninguna factura.", false);
+    avisoPanel("No se pudo registrar: falló la conexión. No se entregó ninguna factura.", false);
     cerrarModal();
     return;
   }
@@ -1134,7 +1247,9 @@ async function confirmarMarca(facturas){
   if (sesionCaida(data)) return;
 
   if (!data || !data.ok){
-    avisoPanel((data && data.mensaje) || "El servidor rechazó el registro. No se marcó ninguna factura.", false);
+    avisoPanel(data && data.motivo === "sin_permiso"
+      ? "Tu usuario no puede entregar facturas."
+      : (data && data.mensaje) || "El servidor rechazó el registro. No se entregó ninguna factura.", false);
     return;
   }
 
@@ -1142,48 +1257,88 @@ async function confirmarMarca(facturas){
     const f = String(g.factura || "").trim().toUpperCase();
     if (!f) return;
     MARCAS[f] = {centro: g.centro || SESION.centro, obs: g.observacion || BORRADORES[f] || "",
-                 por: g.marcadoPor || g.centro || SESION.centro, en: g.marcadoEn || ""};
+                 por: g.marcadoPor || quienSoy(), en: g.marcadoEn || ""};
     delete BORRADORES[f];
     seleccion.delete(f);
   });
 
-  /* Una factura puede haber sido marcada por otra persona entre que se
+  /* Una factura puede haber sido entregada por otra persona entre que se
      abrió la pantalla y se confirmó. El servidor manda quién la tiene. */
   const rechazadas = data.rechazadas || [];
+  let yaMarcadas = 0, sinPdf = 0, otras = 0;
   rechazadas.forEach(x => {
     const f = String(x.factura || "").trim().toUpperCase();
     if (!f) return;
     if (x.motivo === "ya_marcada"){
+      yaMarcadas++;
       MARCAS[f] = {centro: x.centro || "", obs: x.observacion || "",
                    por: x.marcadoPor || x.centro || "", en: x.marcadoEn || ""};
-    }
+    } else if (x.motivo === "sin_pdf"){
+      sinPdf++;
+      if (RESPALDOS[f]) RESPALDOS[f].pdf = null;   // el tablero estaba desactualizado
+    } else otras++;
     seleccion.delete(f);
   });
 
   const n = (data.grabadas || []).length;
-  if (n && rechazadas.length)
-    avisoPanel("Se registraron " + entero(n) + " factura(s). " + entero(rechazadas.length) +
-               " ya estaban marcadas por otra persona.", true);
-  else if (n)
-    avisoPanel("Se registraron " + entero(n) + " factura(s) de forma definitiva.", true);
+  const partes = [];
+  if (yaMarcadas) partes.push(entero(yaMarcadas) + " ya estaba(n) entregada(s) por otra persona");
+  if (sinPdf)     partes.push(entero(sinPdf) + " sin PDF");
+  if (otras)      partes.push(entero(otras) + " fuera de tu cartera");
+  if (n)
+    avisoPanel("Se entregaron " + entero(n) + " factura(s) de forma definitiva." +
+               (partes.length ? " No se entregaron: " + partes.join(", ") + "." : ""), true);
   else
-    avisoPanel("No se registró ninguna: ya estaban marcadas.", false);
+    avisoPanel("No se entregó ninguna: " + (partes.join(", ") || "sin detalle") + ".", false);
 
   actualizarContadores();
   aplicar();
 }
 
-/* ===================== Respaldos en PDF =====================
+/* ===================== Respaldos =====================
+   Los respaldos viven en la biblioteca «Respaldos» de SharePoint, en una
+   carpeta por centro. El robot deja cada noche los PDF que baja de
+   EC Datos; la supervisora adjunta los que falten y toma fotos desde la
+   fila. Adjuntar NO entrega la factura: eso se hace aparte, en la tabla.
+
    El número de factura se saca del NOMBRE del archivo, no de su
    contenido: los PDF llegan como 013-111-000024730.pdf. Así no hace
-   falta ninguna librería externa y la coincidencia es exacta, sin los
-   errores de lectura que tendría interpretar el PDF.
+   falta ninguna librería externa y la coincidencia es exacta.
 
-   Regla de oro: nunca se marca una suposición. Si el nombre no trae el
+   Regla de oro: nunca se adjunta una suposición. Si el nombre no trae el
    número, o el número no está en la cartera de quien subió el archivo,
    o aparece repetido en el lote, ese PDF no se envía — se informa y la
-   persona decide. Con un marcado irreversible, equivocarse de factura
-   es peor que no marcar.                                              */
+   persona decide.                                                     */
+
+/* Ruta dentro del sitio (Respaldos/Kennedy/013-111-000024730.pdf) → URL. */
+function urlRespaldo(ruta){
+  const r = String(ruta || "").trim();
+  if (!r) return "";
+  if (/^https?:\/\//i.test(r)) return r;
+  return CONFIG.SITIO_SHAREPOINT.replace(/\/+$/, "") + "/" +
+         r.replace(/^\/+/, "").split("/").map(encodeURIComponent).join("/");
+}
+
+/* Lo que devuelve el flujo de adjuntos por cada archivo grabado. */
+function registrarRespaldo(x){
+  const f = String(x.factura || "").trim().toUpperCase();
+  if (!f) return;
+  const e = RESPALDOS[f] || (RESPALDOS[f] = {pdf: null, fotos: []});
+  const item = {n: x.nombre || "", u: x.ruta || "", o: x.origen || quienSoy(), e: x.fecha || new Date().toISOString()};
+  if (String(x.tipo || "PDF").toUpperCase() === "FOTO") e.fotos.push(item);
+  else e.pdf = item;
+}
+
+function motivoTexto(x){
+  switch (x && x.motivo){
+    case "ya_tiene_pdf":     return "ya tiene un PDF" + (x.origen ? " (" + x.origen + ")" : "");
+    case "fuera_de_cartera": return "no está en tu cartera";
+    case "sin_permiso":      return "tu usuario no puede adjuntar";
+    case "sin_pdf":          return "no tiene PDF";
+    case "ya_marcada":       return "ya estaba entregada";
+    default:                 return "rechazada por el servidor";
+  }
+}
 
 /* El (?!\d) evita quedarse con los nueve primeros dígitos de un bloque
    más largo y dar por buena una factura que no es. */
@@ -1195,10 +1350,13 @@ async function confirmarMarca(facturas){
    vez de guardarla: escribirla en la fila obligaría a modificarla después de
    creada, y ninguna acción de los flujos modifica un registro de gestión.
 
-   La columna Respaldo guarda solo el nombre del archivo. */
-function enlaceRespaldo(id, archivo){
+   La columna Respaldo guarda solo el nombre del archivo. En los registros
+   nuevos guarda la ruta del PDF dentro de la biblioteca Respaldos. */
+function enlaceMarca(id, archivo){
   const a = String(archivo || "").trim();
-  if (!a || !id) return "";
+  if (!a) return "";
+  if (a.includes("/")) return urlRespaldo(a);  // registro nuevo: ruta en Respaldos
+  if (!id) return "";
   if (/^https?:\/\//i.test(a)) return a;     // por si algún día llegara completa
   return CONFIG.SITIO_SHAREPOINT.replace(/\/+$/, "") +
          "/Lists/" + encodeURIComponent(CONFIG.LISTA_SEGUIMIENTO) +
@@ -1235,11 +1393,11 @@ function leerBase64(archivo){
   });
 }
 
-/* Reparte los archivos en cuatro grupos según qué se puede hacer con ellos. */
+/* Reparte los archivos en grupos según qué se puede hacer con ellos. */
 function clasificarPdf(lista){
   const enCartera = new Set(DATOS.map(r => r.f));
   const vistas = new Set();
-  const listos = [], repetidos = [], yaMarcados = [], fuera = [], sinNumero = [], pesados = [];
+  const listos = [], repetidos = [], conPdf = [], fuera = [], sinNumero = [], pesados = [];
 
   lista.forEach(a => {
     if (a.size > CONFIG.MB_POR_ARCHIVO * 1024 * 1024){ pesados.push({a: a}); return; }
@@ -1247,28 +1405,23 @@ function clasificarPdf(lista){
     if (!f){ sinNumero.push({a: a}); return; }
     if (vistas.has(f)){ repetidos.push({a: a, f: f}); return; }
     vistas.add(f);
-    if (MARCAS[f]){ yaMarcados.push({a: a, f: f}); return; }
     if (!enCartera.has(f)){ fuera.push({a: a, f: f}); return; }
+    if (pdfDe(f)){ conPdf.push({a: a, f: f}); return; }
     listos.push({a: a, f: f});
   });
 
-  return {listos: listos, repetidos: repetidos, yaMarcados: yaMarcados,
+  return {listos: listos, repetidos: repetidos, conPdf: conPdf,
           fuera: fuera, sinNumero: sinNumero, pesados: pesados};
 }
 
 function recibirPdf(lista){
+  if (!puedeAdjuntar()){ avisoPanel("Tu usuario solo puede consultar.", false); return; }
+  if (CONFIG.MODO_DEMO){ avisoPanel("En demostración no se suben archivos.", false); return; }
   const archivos = Array.from(lista || []).filter(a => /\.pdf$/i.test(a.name));
   if (!archivos.length){ avisoPanel("Solo se aceptan archivos PDF.", false); return; }
 
   const g = clasificarPdf(archivos);
-  const mb = g.listos.reduce((t, x) => t + x.a.size, 0) / 1024 / 1024;
-
-  if (mb > CONFIG.MB_POR_LOTE){
-    avisoPanel("El lote pesa " + mb.toFixed(1) + " MB y el tope es " + CONFIG.MB_POR_LOTE +
-               " MB. Súbelos en tandas más pequeñas.", false);
-    return;
-  }
-  if (!g.listos.length){
+  if (!g.listos.length && !g.conPdf.length){
     avisoPanel("Ninguno de los " + entero(archivos.length) + " archivos se pudo asociar a una " +
                "factura pendiente de tu cartera.", false);
     pintarResumenPdf(g);
@@ -1279,8 +1432,8 @@ function recibirPdf(lista){
 
 function pintarResumenPdf(g){
   const p = [];
-  if (g.listos.length)     p.push('<span class="pastilla p-ok">' + entero(g.listos.length) + " se marcarán</span>");
-  if (g.yaMarcados.length) p.push('<span class="pastilla p-aviso">' + entero(g.yaMarcados.length) + " ya estaban marcadas</span>");
+  if (g.listos.length)     p.push('<span class="pastilla p-ok">' + entero(g.listos.length) + " para adjuntar</span>");
+  if (g.conPdf.length)     p.push('<span class="pastilla p-aviso">' + entero(g.conPdf.length) + " ya tienen PDF</span>");
   if (g.fuera.length)      p.push('<span class="pastilla p-mal">' + entero(g.fuera.length) + " no están en tu cartera</span>");
   if (g.repetidos.length)  p.push('<span class="pastilla p-aviso">' + entero(g.repetidos.length) + " repetidas en el lote</span>");
   if (g.sinNumero.length)  p.push('<span class="pastilla p-mal">' + entero(g.sinNumero.length) + " sin número en el nombre</span>");
@@ -1294,8 +1447,18 @@ function pedirConfirmacionPdf(g){
     "<div><b>" + esc(x.f) + '</b><span>' + esc(x.a.name) + " · " +
     (x.a.size/1024).toFixed(0) + " KB</span></div>").join("");
 
+  /* Las que ya tienen PDF se listan con una casilla: solo se reemplazan
+     si la persona lo pide. El anterior queda en el historial de versiones. */
+  const reemplazos = g.conPdf.map(x => {
+    const p = pdfDe(x.f) || {};
+    return '<div><label style="display:flex;gap:9px;align-items:flex-start;cursor:pointer">' +
+      '<input type="checkbox" class="chk" data-reemplazar="' + esc(x.f) + '" style="margin-top:2px">' +
+      "<span style=\"display:block;color:var(--tinta)\"><b>" + esc(x.f) + "</b><span>" + esc(x.a.name) + " · " +
+      (x.a.size/1024).toFixed(0) + " KB<br>ya tiene PDF de " + esc(p.o || "?") +
+      (p.e ? " (" + esc(selloLegible(p.e)) + ")" : "") + "</span></span></label></div>";
+  }).join("");
+
   const descartados = [].concat(
-    g.yaMarcados.map(x => [x.a.name, "ya marcada por " + ((MARCAS[x.f]||{}).por || "otro centro")]),
     g.fuera.map(x      => [x.a.name, "la factura " + x.f + " no está en tu cartera"]),
     g.repetidos.map(x  => [x.a.name, "otro archivo del lote ya trae " + x.f]),
     g.sinNumero.map(x  => [x.a.name, "el nombre no contiene un número de factura"]),
@@ -1310,22 +1473,20 @@ function pedirConfirmacionPdf(g){
 
   $("zonaModal").innerHTML =
     '<div class="velo" id="velo"><div class="modal">' +
-      '<div class="modal-cabeza"><h3>⚠ Adjuntar y marcar</h3></div>' +
+      '<div class="modal-cabeza azul"><h3>📎 Adjuntar respaldos</h3></div>' +
       '<div class="modal-cuerpo">' +
-        '<p class="subrayado">Subir el respaldo marca la factura, y eso no se puede deshacer. ' +
-        'Ni tú ni Tecnología pueden cambiarlo después.</p>' +
-        "<p>Se registrará a nombre de <b>" + esc(SESION.centro) + "</b>, con la fecha y la hora del " +
-        "servidor. El PDF queda guardado junto al registro.</p>" +
-        "<p><b>" + entero(g.listos.length) + "</b> factura(s):</p>" +
-        '<div class="modal-lista">' + filas + "</div>" +
-        '<label class="campo-obs" for="obsPdf">Observación <i>· opcional, se aplica a todas</i></label>' +
-        '<textarea id="obsPdf" class="obs-modal" rows="2" maxlength="300" ' +
-        'placeholder="Ej.: enviada al convenio el 14/09"></textarea>' +
+        "<p>Los PDF quedan guardados en SharePoint a nombre de <b>" + esc(quienSoy()) + "</b> y " +
+        "<b>no se pueden borrar desde el tablero</b>. Adjuntar no entrega la factura: eso lo haces después, desde la tabla.</p>" +
+        (filas ? "<p><b>" + entero(g.listos.length) + "</b> factura(s) sin PDF:</p>" +
+                 '<div class="modal-lista">' + filas + "</div>" : "") +
+        (reemplazos ? "<p style=\"margin-top:12px\"><b>" + entero(g.conPdf.length) + "</b> ya tienen PDF. " +
+                      "Marca las que quieras <b>reemplazar</b>; el anterior queda en el historial:</p>" +
+                      '<div class="modal-lista">' + reemplazos + "</div>" : "") +
         bloqueDescartados +
       "</div>" +
       '<div class="modal-pie">' +
         '<button class="btn-2" id="btnCancelarPdf">Cancelar</button>' +
-        '<button class="btn-peligro" id="btnConfirmarPdf">Sí, adjuntar y marcar</button>' +
+        '<button class="btn-1" id="btnConfirmarPdf">Adjuntar</button>' +
       "</div>" +
     "</div></div>";
 
@@ -1339,76 +1500,165 @@ async function confirmarPdf(g){
   btn.disabled = true;
   $("btnCancelarPdf").disabled = true;
 
-  /* Se lee antes de deshabilitar nada: lo que se escriba aquí vale para todo
-     el lote. Si se deja vacío, cada factura conserva la observación que ya
-     estuviera anotada en su fila de la tabla. */
-  const obsComun = (($("obsPdf") && $("obsPdf").value) || "").trim();
+  const marcados = new Set([...document.querySelectorAll("[data-reemplazar]:checked")].map(e => e.dataset.reemplazar));
+  const lote = g.listos.map(x => ({x: x, reemplazar: false}))
+    .concat(g.conPdf.filter(x => marcados.has(x.f)).map(x => ({x: x, reemplazar: true})));
+  if (!lote.length){
+    cerrarModal();
+    avisoPanel("No se adjuntó nada: no había PDF nuevos ni marcaste ninguno para reemplazar.", false);
+    return;
+  }
 
   let carga;
   try {
     carga = [];
-    for (let i = 0; i < g.listos.length; i++){
-      btn.textContent = "Leyendo " + (i+1) + " de " + g.listos.length + "…";
-      const x = g.listos[i];
-      carga.push({factura: x.f, nombre: x.a.name,
-                  observacion: obsComun || BORRADORES[x.f] || "",
-                  contenido: await leerBase64(x.a)});
+    for (let i = 0; i < lote.length; i++){
+      btn.textContent = "Leyendo " + (i+1) + " de " + lote.length + "…";
+      const x = lote[i].x;
+      carga.push({factura: x.f, tipo: "PDF", nombre: x.a.name, reemplazar: lote[i].reemplazar,
+                  peso: x.a.size, contenido: await leerBase64(x.a)});
     }
   } catch(e){
-    btn.disabled = false; btn.textContent = "Sí, adjuntar y marcar";
+    btn.disabled = false; btn.textContent = "Adjuntar";
     $("btnCancelarPdf").disabled = false;
-    avisoPanel("No se pudo leer uno de los archivos. No se marcó ninguna factura.", false);
+    avisoPanel("No se pudo leer uno de los archivos. No se adjuntó ninguno.", false);
     return;
   }
 
-  btn.textContent = "Subiendo…";
-  let data;
-  try {
-    /* La clave se llama «facturas», igual que en el flujo de marcado: los dos
-       flujos comparten el mismo bucle interno y así no hubo que rehacerlo. */
-    data = await llamar(CONFIG.SUBIR_URL, {token: SESION.token, facturas: carga}, 1);
-  } catch(e){
-    cerrarModal();
-    avisoPanel("No se pudo subir: falló la conexión. Revisa en el tablero si alguna quedó " +
-               "marcada antes de volver a intentarlo.", false);
-    return;
-  }
-
-  cerrarModal();
-  if (sesionCaida(data)) return;
-  if (!data || !data.ok){
-    avisoPanel((data && data.mensaje) || "El servidor rechazó la subida. No se marcó ninguna factura.", false);
-    return;
-  }
-
-  (data.grabadas || []).forEach(x => {
-    const f = String(x.factura || "").trim().toUpperCase();
-    if (!f) return;
-    MARCAS[f] = {centro: x.centro || SESION.centro, obs: x.observacion || BORRADORES[f] || "",
-                 por: x.marcadoPor || x.centro || SESION.centro, en: x.marcadoEn || "",
-                 pdf: enlaceRespaldo(x.id, x.respaldo)};
-    delete BORRADORES[f];
-    seleccion.delete(f);
-  });
-  (data.rechazadas || []).forEach(x => {
-    const f = String(x.factura || "").trim().toUpperCase();
-    if (!f) return;
-    if (x.motivo === "ya_marcada"){
-      MARCAS[f] = {centro: x.centro || "", obs: x.observacion || "",
-                   por: x.marcadoPor || x.centro || "", en: x.marcadoEn || "",
-                   pdf: enlaceRespaldo(x.id, x.respaldo)};
+  /* Se envía en tandas: pocas por llamada y sin pasar del tope en MB,
+     porque el flujo tarda unos segundos por archivo y debe responder a tiempo. */
+  const tandas = [];
+  let actual = [], peso = 0;
+  carga.forEach(a => {
+    if (actual.length && (actual.length >= CONFIG.LOTE_ARCHIVOS || peso + a.peso > CONFIG.MB_POR_LOTE*1024*1024)){
+      tandas.push(actual); actual = []; peso = 0;
     }
-    seleccion.delete(f);
+    actual.push(a); peso += a.peso;
   });
+  if (actual.length) tandas.push(actual);
 
-  const n = (data.grabadas || []).length, r = (data.rechazadas || []).length;
-  if (n && r)      avisoPanel("Se adjuntaron y marcaron " + entero(n) + " factura(s). " + entero(r) +
-                              " ya estaban marcadas por otra persona.", true);
-  else if (n)      avisoPanel("Se adjuntaron y marcaron " + entero(n) + " factura(s) de forma definitiva.", true);
-  else             avisoPanel("No se marcó ninguna: ya estaban marcadas.", false);
+  const grabados = [], rechazados = [];
+  let enviados = 0, fallo = "";
+  for (let t = 0; t < tandas.length; t++){
+    const tanda = tandas[t].map(a => ({factura: a.factura, tipo: a.tipo, nombre: a.nombre,
+                                      contenido: a.contenido, reemplazar: a.reemplazar}));
+    btn.textContent = "Subiendo " + (enviados+1) + "–" + (enviados+tanda.length) + " de " + carga.length + "…";
+    let data;
+    try {
+      data = await llamar(CONFIG.SUBIR_URL, {token: SESION.token, archivos: tanda}, 1);
+    } catch(e){ fallo = "falló la conexión"; break; }
+    if (sesionCaida(data)){ cerrarModal(); return; }
+    if (!data || !data.ok){ fallo = (data && data.motivo === "sin_permiso") ? "tu usuario no puede adjuntar" : "el servidor rechazó la subida"; break; }
+    (data.grabados || []).forEach(x => { grabados.push(x); registrarRespaldo(x); });
+    (data.rechazados || []).forEach(x => rechazados.push(x));
+    enviados += tanda.length;
+  }
+  cerrarModal();
+
+  const n = grabados.length, reemplazados = grabados.filter(x => x.reemplazo).length;
+  const motivos = {};
+  rechazados.forEach(x => { const m = motivoTexto(x); motivos[m] = (motivos[m]||0) + 1; });
+  const detalle = Object.keys(motivos).map(m => entero(motivos[m]) + " " + m).join(", ");
+
+  let texto = n ? "Se adjuntaron " + entero(n) + " PDF" + (reemplazados ? " (" + entero(reemplazados) + " reemplazados)" : "") + "."
+                : "No se adjuntó ningún PDF.";
+  if (detalle) texto += " No se adjuntaron: " + detalle + ".";
+  if (fallo)   texto += " Se detuvo en el archivo " + entero(enviados+1) + " de " + entero(carga.length) + ": " + fallo + ". Vuelve a intentar con los que faltan.";
+  avisoPanel(texto, n > 0 && !fallo);
 
   pintarResumenPdf(g);
   actualizarContadores();
+  aplicar();
+}
+
+/* ===================== Fotos por fila =====================
+   La foto se toma o se elige, el navegador la reduce a FOTO_MAX_PX de
+   lado y se sube como JPG al flujo de adjuntos con tipo FOTO. Puede
+   haber varias por factura; ninguna se borra desde el tablero.       */
+let fotoFactura = "";
+
+function pedirFoto(f){
+  if (!puedeAdjuntar()){ avisoPanel("Tu usuario solo puede consultar.", false); return; }
+  if (CONFIG.MODO_DEMO){ avisoPanel("En demostración no se suben fotos.", false); return; }
+  fotoFactura = f;
+  $("archivoFoto").click();
+}
+
+function reducirImagen(archivo, maxPx){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const escala = Math.min(1, maxPx / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+        const w = Math.max(1, Math.round((img.naturalWidth || img.width) * escala));
+        const h = Math.max(1, Math.round((img.naturalHeight || img.height) * escala));
+        const c = document.createElement("canvas"); c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/jpeg", 0.85));
+      } catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("No se pudo leer la imagen.")); };
+    img.src = url;
+  });
+}
+
+async function recibirFoto(archivo){
+  const f = fotoFactura; fotoFactura = "";
+  if (!archivo || !f) return;
+  if (!/^image\//i.test(archivo.type || "") && !/\.(jpe?g|png|webp|heic)$/i.test(archivo.name || "")){
+    avisoPanel("Solo se aceptan imágenes (JPG o PNG).", false); return;
+  }
+  avisoPanel("Preparando la foto…", true);
+  let dataUrl;
+  try { dataUrl = await reducirImagen(archivo, CONFIG.FOTO_MAX_PX); }
+  catch(e){ avisoPanel("No se pudo leer la imagen. Prueba con otra foto o con un JPG.", false); return; }
+  $("mensajePanel").innerHTML = "";
+
+  $("zonaModal").innerHTML =
+    '<div class="velo" id="velo"><div class="modal">' +
+      '<div class="modal-cabeza azul"><h3>📷 Guardar foto de respaldo</h3></div>' +
+      '<div class="modal-cuerpo">' +
+        '<p class="subrayado">La foto quedará guardada como respaldo de la factura <b>' + esc(f) +
+        "</b> y no se puede borrar desde el tablero.</p>" +
+        "<p>Se guarda a nombre de <b>" + esc(quienSoy()) + "</b>. Revisa que se lea bien antes de guardar.</p>" +
+        '<img class="vista-previa" src="' + dataUrl + '" alt="Vista previa">' +
+      "</div>" +
+      '<div class="modal-pie">' +
+        '<button class="btn-2" id="btnCancelarFoto">Cancelar</button>' +
+        '<button class="btn-1" id="btnConfirmarFoto">Sí, guardar la foto</button>' +
+      "</div>" +
+    "</div></div>";
+  $("btnCancelarFoto").onclick = cerrarModal;
+  $("velo").addEventListener("click", ev => { if (ev.target.id === "velo") cerrarModal(); });
+  $("btnConfirmarFoto").onclick = () => subirFoto(f, dataUrl);
+}
+
+async function subirFoto(f, dataUrl){
+  const btn = $("btnConfirmarFoto");
+  btn.disabled = true; btn.textContent = "Subiendo…";
+  $("btnCancelarFoto").disabled = true;
+  const contenido = dataUrl.slice(dataUrl.indexOf(",") + 1);
+  let data;
+  try {
+    data = await llamar(CONFIG.SUBIR_URL, {token: SESION.token,
+      archivos: [{factura: f, tipo: "FOTO", nombre: "foto.jpg", contenido: contenido, reemplazar: false}]}, 1);
+  } catch(e){
+    cerrarModal();
+    avisoPanel("No se pudo subir la foto: falló la conexión. Vuelve a intentarlo.", false);
+    return;
+  }
+  cerrarModal();
+  if (sesionCaida(data)) return;
+  if (!data || !data.ok){
+    avisoPanel(data && data.motivo === "sin_permiso" ? "Tu usuario no puede adjuntar." : "El servidor rechazó la foto.", false);
+    return;
+  }
+  const grabados = data.grabados || [], rechazados = data.rechazados || [];
+  grabados.forEach(registrarRespaldo);
+  if (grabados.length) avisoPanel("Foto guardada como respaldo de " + f + ".", true);
+  else avisoPanel("No se guardó la foto: " + motivoTexto(rechazados[0]) + ".", false);
   aplicar();
 }
 
@@ -1511,7 +1761,7 @@ function agrupar(filas, clave, valorFn){
 }
 
 function pintarAnalisis(){
-  if (!esAdmin()) return;              // la vista de análisis es solo de ADMIN
+  if (!vistaAmplia()) return;          // la vista de análisis es de ADMIN y OPERACIONES
   const meses = [...new Set(filtrados.map(r => r.d.slice(0,7)).filter(Boolean))].sort();
   const porMes = meses.map(m => {
     const filas = filtrados.filter(r => r.d.slice(0,7) === m);
@@ -1532,7 +1782,7 @@ function pintarAnalisis(){
     s => "<b>" + s.nombre + "</b><br>" + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)" +
          (totalPend ? "<br>" + (s.valor/totalPend*100).toFixed(1) + "% del pendiente" : ""));
 
-  if (esAdmin()){
+  if (vistaAmplia()){
     barrasHorizontales("gCentros",
       agrupar(filtrados, r => r.c, r => r.s).sort((a,b)=>b.valor-a.valor),
       "var(--serie-1)", compacto,
@@ -1546,40 +1796,43 @@ function pintarAnalisis(){
 
   const marcadas = filtrados.filter(r => MARCAS[r.f]);
   barras("gAvance", [
-    {etiqueta:"Marcadas",   valor: marcadas.reduce((a,r)=>a+r.s,0), n: marcadas.length},
-    {etiqueta:"Sin marcar", valor: totalPend - marcadas.reduce((a,r)=>a+r.s,0), n: filtrados.length - marcadas.length}
+    {etiqueta:"Entregadas",   valor: marcadas.reduce((a,r)=>a+r.s,0), n: marcadas.length},
+    {etiqueta:"Sin entregar", valor: totalPend - marcadas.reduce((a,r)=>a+r.s,0), n: filtrados.length - marcadas.length}
   ], "var(--serie-1)", compacto,
     s => "<b>" + s.etiqueta + "</b><br>" + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
 
-  if (!esAdmin()) return;
+  if (!vistaAmplia()) return;
 
   const porCentro = agrupar(filtrados, r => r.c, () => 0).map(g => {
     const filas = filtrados.filter(r => r.c === g.etiqueta);
     return {centro: g.etiqueta, total: filas.length,
             pend: filas.reduce((a,r)=>a+r.s,0),
             viejo: filas.filter(r=>r.tramo===3).reduce((a,r)=>a+r.s,0),
+            conPdf: filas.filter(r => pdfDe(r.f)).length,
             marcadas: filas.filter(r => MARCAS[r.f]).length};
   }).sort((a,b) => b.pend - a.pend);
 
   $("tablaCentros").innerHTML =
     "<thead><tr><th>Centro</th><th class='num'>Facturas</th><th class='num'>Pendiente</th>" +
-    "<th class='num'>&gt; 90 días</th><th class='num'>Gestionadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
+    "<th class='num'>&gt; 90 días</th><th class='num'>Con PDF</th><th class='num'>Entregadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
     (porCentro.length ? porCentro.map(c =>
       "<tr><td><b>" + esc(c.centro) + "</b></td>" +
       "<td class='num'>" + entero(c.total) + "</td>" +
       "<td class='num'>" + dinero(c.pend) + "</td>" +
       "<td class='num'>" + dinero(c.viejo) + "</td>" +
+      "<td class='num'>" + entero(c.conPdf) + "</td>" +
       "<td class='num'>" + entero(c.marcadas) + " / " + entero(c.total) + "</td>" +
       "<td class='num'>" + (c.total ? (c.marcadas/c.total*100).toFixed(1) : "0.0") + "%</td></tr>").join("")
-      : "<tr><td colspan='6' class='vacio'>Sin datos.</td></tr>") + "</tbody>";
+      : "<tr><td colspan='7' class='vacio'>Sin datos.</td></tr>") + "</tbody>";
 }
 
 /* ========================= Descargas (CSV, sin librerías) ========================= */
 const COLUMNAS = ["Centro","Número factura","Fecha","Caja","Plan | Convenio","Valor","Saldo",
-                  "Días","Marcada","Marcada por","Marcada el","Observación"];
+                  "Días","PDF","Origen PDF","Fotos","Entregada","Entregada por","Entregada el","Observación"];
 function aFila(r){
-  const m = MARCAS[r.f];
+  const m = MARCAS[r.f], p = pdfDe(r.f);
   return [r.c, r.f, fechaLarga(r.d), r.u, r.p, r.v.toFixed(2), r.s.toFixed(2), r.dias,
+          p ? "SI" : "NO", p ? p.o : "", fotosDe(r.f).length,
           m ? "SI" : "NO", m ? (m.por || m.centro) : "", m ? selloLegible(m.en) : "", m ? m.obs : ""];
 }
 function descargarCsv(filas, nombre){
@@ -1649,6 +1902,12 @@ function conectarControles(){
   entrada.addEventListener("change", () => {
     recibirPdf(entrada.files);
     entrada.value = "";          // permite volver a elegir el mismo archivo
+  });
+  const entradaFoto = $("archivoFoto");
+  entradaFoto.addEventListener("change", () => {
+    const a = entradaFoto.files && entradaFoto.files[0];
+    entradaFoto.value = "";
+    recibirFoto(a);
   });
   ["dragenter","dragover"].forEach(ev => zona.addEventListener(ev, e => {
     e.preventDefault(); zona.classList.add("encima");
@@ -1727,7 +1986,7 @@ let demoMarcas = [];
 function demoVerificar(centro, clave){
   if (String(clave) !== "demo") return {ok:false};
   const admin = /ADMINISTRA/i.test(centro);
-  return {ok:true, centro: centro, rol: admin ? "ADMIN" : "CENTRO",
+  return {ok:true, usuario: centro, centro: centro, rol: admin ? "ADMIN" : "CENTRO",
           token: "demo-token", expira: new Date(Date.now()+8*3600000).toISOString()};
 }
 function demoDatos(){
@@ -1761,9 +2020,13 @@ function demoDatos(){
       marcadoEn: new Date(Date.now() - (i+1)*3600000).toISOString()
     }));
   }
-  return {ok:true, centro: SESION.centro, rol: SESION.rol, corte: "19/08/2026",
+  /* La mitad tiene PDF, para ver cómo se habilita Entregar. */
+  const respaldos = filas.filter((f,i) => i % 2 === 0).map(f => ({
+    f: f["Número factura"], t: "PDF", n: f["Número factura"] + ".pdf",
+    u: "Respaldos/Demo/" + f["Número factura"] + ".pdf", o: "RPA", e: new Date().toISOString()}));
+  return {ok:true, usuario: SESION.usuario, centro: SESION.centro, rol: SESION.rol, corte: "19/08/2026",
           consultado: new Date().toISOString(), origen: "datos inventados (demostración)",
-          filas: filas, marcas: demoMarcas};
+          filas: filas, marcas: demoMarcas, respaldos: respaldos, avisos: []};
 }
 function demoMarcar(carga){
   const grabadas = [], rechazadas = [];

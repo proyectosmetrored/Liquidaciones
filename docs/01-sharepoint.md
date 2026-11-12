@@ -1,5 +1,15 @@
 # 1 · Preparar SharePoint
 
+> **Nota de noviembre de 2026.** Este documento describe la construcción
+> inicial (septiembre de 2026). Desde entonces cambió lo siguiente:
+> la lista de accesos es `Accesos` del sitio EquipamientoConsultorios
+> (`Title` = usuario, `field_1` = clave, `CentroMedico`, `Rol`, `Ciudad`,
+> `Sistema`), con roles `CENTRO`, `ADMIN`, `OPERACIONES` y `RPA`; el Excel vive
+> en Documentos del sitio Autoconsumos y se lee a través de la biblioteca
+> `Cache`; se agregaron la biblioteca `Respaldos` (una carpeta por centro) y la
+> lista `AutoconsumosAuditoria`. Lo vigente está en
+> [`03-contrato.md`](03-contrato.md) y [`05-robot-y-respaldos.md`](05-robot-y-respaldos.md).
+
 Primer paso. Sin esto, los flujos del paso 2 no tienen dónde leer ni escribir.
 
 ---

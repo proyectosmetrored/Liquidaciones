@@ -1,5 +1,14 @@
 # 4 · Publicación
 
+> **Nota de noviembre de 2026.** El tablero se publica en GitHub Pages
+> (`proyectosmetrored/Liquidaciones`, rama `main`), con las direcciones de los
+> flujos ya puestas en `CONFIG` y `MODO_DEMO: false`. Se decidió versionar el
+> archivo configurado a sabiendas de que las firmas `&sig=` quedan a la vista.
+> El bloque `CONFIG` tiene además `SUBIR_URL` (flujo Adjuntar respaldo),
+> `LOTE_ARCHIVOS`, `FOTO_MAX_PX` y `CENTROS_GUAYAQUIL`. La lista de revisión de
+> 4.2 sigue valiendo; súmele: entregar sin PDF debe decir «Falta el PDF», el
+> usuario `RPA` no debe poder entrar, y `OPERACIONES` no debe ver botones.
+
 Último paso: conectar el tablero a los flujos y ponerlo a disposición de los
 centros.
 
