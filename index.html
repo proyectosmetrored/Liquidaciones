@@ -310,9 +310,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         <option value="">Cualquiera</option><option value="0">Hasta 30 días</option>
         <option value="1">31 a 60 días</option><option value="2">61 a 90 días</option>
         <option value="3">Más de 90 días</option></select></div>
-      <div class="campo"><label for="fSeguimiento">Gestión</label><select id="fSeguimiento">
-        <option value="">Todas</option><option value="si">Entregadas</option>
-        <option value="no">Sin entregar</option><option value="conpdf">Con PDF, sin entregar</option>
+      <div class="campo" id="campoSeguimiento"><label for="fSeguimiento">Respaldo</label><select id="fSeguimiento">
+        <option value="">Todas</option><option value="conpdf">Con PDF</option>
         <option value="sinpdf">Sin PDF</option></select></div>
       <div class="campo"><label>&nbsp;</label>
         <div class="acciones">
@@ -326,13 +325,13 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   <section class="kpis" id="kpis"></section>
 
   <section class="avance-barra" id="avanceBarra">
-    <div class="dato"><span>Pendientes</span><b id="cTotal">0</b></div>
+    <div class="dato"><span>Cartera</span><b id="cTotal">0</b></div>
     <div class="sep"></div>
-    <div class="dato"><span>Entregadas</span><b id="cMarcadas">0</b></div>
+    <div class="dato"><span>Liquidadas</span><b id="cMarcadas">0</b></div>
     <div class="sep"></div>
-    <div class="dato"><span>Sin entregar</span><b id="cSinMarcar">0</b></div>
+    <div class="dato"><span>Pendientes</span><b id="cSinMarcar">0</b></div>
     <div class="sep"></div>
-    <div class="dato"><span>Con PDF</span><b id="cConPdf">0</b></div>
+    <div class="dato"><span>Pendientes con PDF</span><b id="cConPdf">0</b></div>
     <div class="sep"></div>
     <div class="progreso">
       <div class="riel"><i id="cRiel" style="width:0%"></i></div>
@@ -361,19 +360,20 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
   <div id="mensajePanel"></div>
 
-  <p class="nota-regla"><b>Para entregar una factura hace falta su PDF.</b> El robot los carga cada
+  <p class="nota-regla" id="notaRegla"><b>Para entregar una factura hace falta su PDF.</b> El robot los carga cada
   noche desde EC Datos; si falta alguno, adjúntalo aquí o toma una foto desde la fila. La entrega queda
   guardada en SharePoint a nombre de quien la registra y <b>no se puede corregir ni borrar</b> — revisa antes de confirmar.</p>
 
   <div class="pestanas" id="pestanas">
-    <button class="activa" data-vista="detalle">Detalle de facturas</button>
-    <button data-vista="analisis">Análisis</button>
+    <button class="activa" data-vista="detalle">Pendientes</button>
+    <button data-vista="liquidadas">Liquidadas</button>
+    <button data-vista="analisis" id="pestAnalisis">Análisis</button>
   </div>
 
   <!-- ============ DETALLE ============ -->
   <div id="vistaDetalle">
         <section class="tarjeta">
-          <h2>Detalle <span class="extra" id="resumenTabla">—</span></h2>
+          <h2><span id="tituloTabla">Pendientes</span> <span class="extra" id="resumenTabla">—</span></h2>
 
           <div class="lote" id="barraLote" style="display:none">
             <b id="loteConteo">0 seleccionadas</b>
@@ -819,15 +819,18 @@ async function abrirApp(){
   $("tarjetaCentros").classList.toggle("oculto", !amplio);
   $("cajaCentros").classList.toggle("oculto", !amplio);
   $("kpis").classList.toggle("oculto", !amplio);
-  $("pestanas").classList.toggle("oculto", !amplio);
+  /* Pendientes y Liquidadas las ven todos; Análisis solo ADMIN y OPERACIONES. */
+  $("pestAnalisis").classList.toggle("oculto", !amplio);
   $("panelDescargas").classList.toggle("oculto", !esAdmin());
   /* Adjuntar respaldos lo hacen ADMIN y los centros. La zona solo
      aparece si existe el flujo que los recibe. */
   $("zonaPdf").classList.toggle("oculto", !CONFIG.SUBIR_URL || !puedeAdjuntar());
-  if (!amplio){
-    $("vistaDetalle").classList.remove("oculto");
-    $("vistaAnalisis").classList.add("oculto");
-  }
+  VISTA = "detalle";
+  document.querySelectorAll(".pestanas button").forEach(x => x.classList.toggle("activa", x.dataset.vista === "detalle"));
+  $("vistaDetalle").classList.remove("oculto");
+  $("vistaAnalisis").classList.add("oculto");
+  $("notaRegla").classList.remove("oculto");
+  $("campoSeguimiento").classList.remove("oculto");
   await cargarDatos();
 }
 
@@ -904,9 +907,15 @@ async function cargarDatos(){
 const POR_PAGINA = 100;
 const CAMPOS = ["fBusqueda","fCiudad","fCentro","fMes","fPlan","fAntiguedad","fSeguimiento"];
 const ETIQUETAS = {fBusqueda:"Búsqueda", fCiudad:"Ciudad", fCentro:"Centro", fMes:"Mes",
-                   fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Gestión"};
+                   fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Respaldo"};
 const CLAVE_FILTROS = "autoconsumos.filtros.v4";
 let filtrados = [], pagina = 1, orden = {col:"dias", asc:false};
+/* Pestaña activa: "detalle" (pendientes), "liquidadas" o "analisis".
+   Entregar equivale a liquidar: la factura sale de Pendientes y pasa a
+   Liquidadas en el momento. FILTRADOS_TODOS es lo filtrado sin separar
+   por pestaña; lo usan los indicadores y el análisis. */
+let VISTA = "detalle", FILTRADOS_TODOS = [];
+const enLiquidadas = () => VISTA === "liquidadas";
 const seleccion = new Set();
 
 const unicos = campo => [...new Set(DATOS.map(r => r[campo]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
@@ -943,19 +952,19 @@ function aplicar(){
   const texto  = $("fBusqueda").value.trim().toUpperCase();
   const centro = $("fCentro").value, mes = $("fMes").value, ciudad = $("fCiudad").value;
   const plan   = $("fPlan").value, tramo = $("fAntiguedad").value, seg = $("fSeguimiento").value;
-  filtrados = DATOS.filter(r => {
+  FILTRADOS_TODOS = DATOS.filter(r => {
     if (texto && !(r.f.toUpperCase().includes(texto) || r.p.toUpperCase().includes(texto) || r.u.toUpperCase().includes(texto))) return false;
     if (ciudad && ciudadDe(r.c) !== ciudad) return false;
     if (centro && r.c !== centro) return false;
     if (plan   && r.p !== plan)   return false;
     if (mes    && r.d.slice(0,7) !== mes) return false;
     if (tramo !== "" && String(r.tramo) !== tramo) return false;
-    if (seg === "si" && !MARCAS[r.f]) return false;
-    if (seg === "no" &&  MARCAS[r.f]) return false;
-    if (seg === "conpdf" && (MARCAS[r.f] || !pdfDe(r.f))) return false;
+    if (seg === "conpdf" && !pdfDe(r.f)) return false;
     if (seg === "sinpdf" && pdfDe(r.f)) return false;
     return true;
   });
+  const liq = enLiquidadas();
+  filtrados = FILTRADOS_TODOS.filter(r => liq ? !!MARCAS[r.f] : !MARCAS[r.f]);
   ordenar();
   pagina = 1;
   guardarFiltros();
@@ -992,25 +1001,27 @@ function ordenar(){
 /* ========================= Indicadores ========================= */
 function pintarKpis(){
   if (!vistaAmplia()) return;          // los centros no ven indicadores
-  const total = filtrados.length;
-  const pend  = filtrados.reduce((a,r) => a + r.s, 0);
-  const valor = filtrados.reduce((a,r) => a + r.v, 0);
-  const viejo = filtrados.filter(r => r.tramo === 3).reduce((a,r)=>a+r.s,0);
-  const marcadas = filtrados.filter(r => MARCAS[r.f]).length;
-  const pct = total ? marcadas/total*100 : 0;
-  const dias = total ? filtrados.reduce((a,r)=>a+r.dias,0)/total : 0;
-  const filtrando = total !== DATOS.length;
+  const todos = FILTRADOS_TODOS, pendientes = todos.filter(r => !MARCAS[r.f]);
+  const total = pendientes.length;
+  const pend  = pendientes.reduce((a,r) => a + r.s, 0);
+  const valor = pendientes.reduce((a,r) => a + r.v, 0);
+  const viejo = pendientes.filter(r => r.tramo === 3).reduce((a,r)=>a+r.s,0);
+  const marcadas = todos.length - total;
+  const pct = todos.length ? marcadas/todos.length*100 : 0;
+  const dias = total ? pendientes.reduce((a,r)=>a+r.dias,0)/total : 0;
+  const filtrando = todos.length !== DATOS.length;
+  const pendCartera = DATOS.filter(r => !MARCAS[r.f]).length;
 
   const tarjetas = [
     ["Facturas pendientes", entero(total),
-      filtrando ? "de " + entero(DATOS.length) + " en total" : "Toda la cartera cargada", false, null],
+      filtrando ? "de " + entero(pendCartera) + " pendientes en total" : "Sin contar las liquidadas", false, null],
     ["Saldo pendiente", dinero(pend),
       "Valor facturado " + dinero(valor), false, null],
     ["Pendiente > 90 días", dinero(viejo),
       pend ? (viejo/pend*100).toFixed(1) + "% del pendiente" : "Sin pendiente", true, null],
     ["Antigüedad promedio", Math.round(dias) + " días",
       "Desde la emisión hasta el corte", dias > 90, null],
-    ["Gestión registrada", entero(marcadas),
+    ["Liquidadas", entero(marcadas),
       pct.toFixed(1) + "% de lo consultado", false, pct]
   ];
   $("kpis").innerHTML = tarjetas.map(([t,v,p,rojo,barra]) =>
@@ -1023,7 +1034,7 @@ function actualizarContadores(){
   $("cTotal").textContent     = entero(DATOS.length);
   $("cMarcadas").textContent  = entero(marcadas);
   $("cSinMarcar").textContent = entero(DATOS.length - marcadas);
-  $("cConPdf").textContent    = entero(DATOS.filter(r => pdfDe(r.f)).length);
+  $("cConPdf").textContent    = entero(DATOS.filter(r => !MARCAS[r.f] && pdfDe(r.f)).length);
   /* Sobre la cartera completa, no sobre lo filtrado: el avance de una
      supervisora no cambia porque acote la vista a un convenio. */
   const pct = DATOS.length ? marcadas / DATOS.length * 100 : 0;
@@ -1036,6 +1047,22 @@ function avisoPanel(texto, ok){
   setTimeout(() => { const m = $("mensajePanel"); if (m) m.innerHTML = ""; }, 9000);
 }
 
+/* ========================= Pestañas ========================= */
+function cambiarVista(vista){
+  VISTA = vista || "detalle";
+  document.querySelectorAll(".pestanas button").forEach(x => x.classList.toggle("activa", x.dataset.vista === VISTA));
+  const analisis = VISTA === "analisis", liq = enLiquidadas();
+  $("vistaDetalle").classList.toggle("oculto", analisis);
+  $("vistaAnalisis").classList.toggle("oculto", !analisis);
+  /* En Liquidadas solo se mira: sin zona de carga, sin selección por lote
+     y sin filtro de respaldo (todas tienen PDF). */
+  $("zonaPdf").classList.toggle("oculto", liq || !CONFIG.SUBIR_URL || !puedeAdjuntar());
+  $("notaRegla").classList.toggle("oculto", liq);
+  $("campoSeguimiento").classList.toggle("oculto", liq);
+  if (liq) seleccion.clear();
+  aplicar();
+}
+
 /* ========================= Tabla ========================= */
 function pintarTabla(){
   const total = filtrados.length;
@@ -1044,11 +1071,15 @@ function pintarTabla(){
   const desde = (pagina-1) * POR_PAGINA;
   const trozo = filtrados.slice(desde, desde + POR_PAGINA);
 
+  $("tituloTabla").textContent = enLiquidadas() ? "Liquidadas" : "Pendientes";
   $("resumenTabla").innerHTML = entero(total) + " factura(s) · saldo " +
     dinero(filtrados.reduce((a,r)=>a+r.s,0));
 
   if (!total){
-    $("cuerpoTabla").innerHTML = '<tr><td colspan="12" class="vacio">No se encontraron facturas con los filtros aplicados.</td></tr>';
+    $("cuerpoTabla").innerHTML = '<tr><td colspan="12" class="vacio">' +
+      (enLiquidadas() && !FILTRADOS_TODOS.some(r => MARCAS[r.f])
+        ? "Todavía no hay facturas liquidadas. Al entregar una desde Pendientes aparece aquí."
+        : "No se encontraron facturas con los filtros aplicados.") + "</td></tr>";
   } else {
     $("cuerpoTabla").innerHTML = trozo.map(r => {
       const marca = MARCAS[r.f], sel = seleccion.has(r.f);
@@ -1119,7 +1150,7 @@ function pintarTabla(){
   const marcables = puedeEntregar() ? trozo.filter(r => !MARCAS[r.f] && pdfDe(r.f)) : [];
   $("chkTodas").checked  = marcables.length > 0 && marcables.every(r => seleccion.has(r.f));
   $("chkTodas").disabled = marcables.length === 0;
-  $("chkTodas").style.visibility = puedeEntregar() ? "" : "hidden";
+  $("chkTodas").style.visibility = puedeEntregar() && !enLiquidadas() ? "" : "hidden";
   $("infoPagina").innerHTML = total
     ? "Mostrando <b>" + entero(desde+1) + "</b>–<b>" + entero(Math.min(desde+POR_PAGINA,total)) + "</b> de <b>" + entero(total) + "</b>"
     : "Sin resultados";
@@ -1286,7 +1317,7 @@ async function confirmarMarca(facturas){
   if (sinPdf)     partes.push(entero(sinPdf) + " sin PDF");
   if (otras)      partes.push(entero(otras) + " fuera de tu cartera");
   if (n)
-    avisoPanel("Se entregaron " + entero(n) + " factura(s) de forma definitiva." +
+    avisoPanel("Se entregaron " + entero(n) + " factura(s) de forma definitiva. Ya están en la pestaña Liquidadas." +
                (partes.length ? " No se entregaron: " + partes.join(", ") + "." : ""), true);
   else
     avisoPanel("No se entregó ninguna: " + (partes.join(", ") || "sin detalle") + ".", false);
@@ -1761,6 +1792,7 @@ function agrupar(filas, clave, valorFn){
 }
 
 function pintarAnalisis(){
+  const filtrados = FILTRADOS_TODOS;   // el análisis mira pendientes y liquidadas
   if (!vistaAmplia()) return;          // la vista de análisis es de ADMIN y OPERACIONES
   const meses = [...new Set(filtrados.map(r => r.d.slice(0,7)).filter(Boolean))].sort();
   const porMes = meses.map(m => {
@@ -1796,8 +1828,8 @@ function pintarAnalisis(){
 
   const marcadas = filtrados.filter(r => MARCAS[r.f]);
   barras("gAvance", [
-    {etiqueta:"Entregadas",   valor: marcadas.reduce((a,r)=>a+r.s,0), n: marcadas.length},
-    {etiqueta:"Sin entregar", valor: totalPend - marcadas.reduce((a,r)=>a+r.s,0), n: filtrados.length - marcadas.length}
+    {etiqueta:"Liquidadas", valor: marcadas.reduce((a,r)=>a+r.s,0), n: marcadas.length},
+    {etiqueta:"Pendientes", valor: totalPend - marcadas.reduce((a,r)=>a+r.s,0), n: filtrados.length - marcadas.length}
   ], "var(--serie-1)", compacto,
     s => "<b>" + s.etiqueta + "</b><br>" + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
 
@@ -1814,7 +1846,7 @@ function pintarAnalisis(){
 
   $("tablaCentros").innerHTML =
     "<thead><tr><th>Centro</th><th class='num'>Facturas</th><th class='num'>Pendiente</th>" +
-    "<th class='num'>&gt; 90 días</th><th class='num'>Con PDF</th><th class='num'>Entregadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
+    "<th class='num'>&gt; 90 días</th><th class='num'>Con PDF</th><th class='num'>Liquidadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
     (porCentro.length ? porCentro.map(c =>
       "<tr><td><b>" + esc(c.centro) + "</b></td>" +
       "<td class='num'>" + entero(c.total) + "</td>" +
@@ -1921,12 +1953,7 @@ function conectarControles(){
   /* Sin el navegador abriría el PDF y se perdería lo que haya en pantalla. */
   ["dragover","drop"].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
 
-  document.querySelectorAll(".pestanas button").forEach(b => b.onclick = () => {
-    document.querySelectorAll(".pestanas button").forEach(x => x.classList.toggle("activa", x === b));
-    const analisis = b.dataset.vista === "analisis";
-    $("vistaDetalle").classList.toggle("oculto", analisis);
-    $("vistaAnalisis").classList.toggle("oculto", !analisis);
-  });
+  document.querySelectorAll(".pestanas button").forEach(b => b.onclick = () => cambiarVista(b.dataset.vista));
 
   $("btnPrimera").onclick   = () => { pagina = 1; pintarTabla(); };
   $("btnAnterior").onclick  = () => { pagina--; pintarTabla(); };

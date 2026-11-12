@@ -79,7 +79,8 @@ por flujos de Power Automate:
 4. Al día siguiente la fila trae «📄 PDF · RPA». La supervisora la revisa, agrega
    fotos si hace falta y pulsa **Entregar**. Si el robot no la encontró, la fila
    lo dice y ahí sí ella adjunta el PDF a mano o toma una foto.
-5. La entrega queda en SharePoint, firmada, y para todos equivale a liquidada.
+5. La entrega queda en SharePoint, firmada, y equivale a liquidada: la factura
+   sale de la pestaña **Pendientes** y pasa a **Liquidadas**, donde solo se mira.
 
 ## Puesta en marcha
 
@@ -148,6 +149,6 @@ editor de texto y se publica con un `git push`.
 - **Las contraseñas se guardan en texto plano** en la lista de accesos. La
   protección real es el permiso de esa lista. La solución de fondo es autenticar
   con Entra ID.
-- **La hoja `LIQUIDADO` aún no se muestra.** Es lo siguiente: una pestaña de
-  solo lectura con lo que ya se entregó, y un `LIQUIDADO.xlsx` aparte que se
-  regenera cada noche para Administración. El Excel base no se toca.
+- **Administración todavía no tiene las liquidadas en Excel.** En el tablero
+  ya están en la pestaña Liquidadas; falta un `LIQUIDADO.xlsx` aparte que se
+  regenere cada noche para Administración. El Excel base no se toca.
