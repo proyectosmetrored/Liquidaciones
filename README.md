@@ -14,7 +14,7 @@ en el navegador de cada persona.
 | Los datos | Dentro del archivo, 10 MB | Se piden al abrir; el archivo va vacío |
 | El acceso | `metro` / `2026` en el JavaScript | Usuario y contraseña, validados en el servidor |
 | Qué ve cada uno | Todos veían todo | Cada centro ve solo su cartera |
-| El PDF de la factura | Lo buscaba cada centro | **Lo pone un robot cada noche desde EC Datos** |
+| El PDF de la factura | Lo buscaba cada centro | **Lo pone un robot desde EC Datos**, cada noche o cuando se lance |
 | El seguimiento | En el navegador de cada quien | En SharePoint, visible para todos |
 | Corregir una entrega | Se podía borrar sin rastro | **No se puede: es definitiva y queda firmada** |
 | Quién hizo qué | Nadie lo sabía | Lista de auditoría: cada PDF, foto y entrega con usuario y hora |

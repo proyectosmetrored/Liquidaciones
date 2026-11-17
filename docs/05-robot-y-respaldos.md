@@ -1,8 +1,9 @@
 # 5 · El robot y los respaldos
 
 Desde noviembre de 2026 los PDF de las facturas no los sube cada centro: los
-pone un robot cada noche, bajándolos del portal de facturación electrónica
-**EC Datos**. Los centros solo revisan, agregan fotos si hace falta y entregan.
+pone un robot, bajándolos del portal de facturación electrónica **EC Datos**.
+Corre cada noche y también se puede lanzar a cualquier hora. Los centros solo
+revisan, agregan fotos si hace falta y entregan.
 
 Este documento explica dónde vive cada cosa, cómo corre el robot y cómo leer
 lo que deja.
@@ -62,9 +63,10 @@ Carpeta `P:\rpa_ecdatos`, con su propio `README.md` detallado. Lo esencial:
 |---|---|
 | `subir_tablero.py` | La corrida: entra como `RPA`, pide la cartera, baja de EC Datos lo que no tiene PDF y lo sube de 10 en 10 |
 | `descargar.py` | Baja PDF por lista de números a una carpeta, sin tocar el tablero. Sirve para preparar cargas masivas manuales |
-| `ecdatos_api.py` | El cliente de EC Datos, copia del que usa el MEGA RPA |
+| `ecdatos.py` | El cliente de la API directa de EC Datos: una dirección por factura devuelve el PDF, sin iniciar sesión. Ocho descargas a la vez |
+| `ecdatos_api.py` | Método anterior (entraba al portal como una persona). Ya no se usa; queda de respaldo |
 | `config_tablero.py` | Direcciones de los flujos y la clave del usuario `RPA`. **No se versiona** |
-| `config_ecdatos.py` | Credenciales de EC Datos; las toma de `P:\mega_rpa\config\settings.py` |
+| `config_ecdatos.py` | `TOKEN_API`, el identificador de la empresa en EC Datos. **No se versiona** |
 | `descargas/` | Caché local de PDF. Lo que está aquí no se vuelve a pedir al portal |
 | `logs/`, `resultados/` | Un log y un CSV por corrida, con nombre `tablero_RPA-aaaammdd-HHmm` |
 
@@ -87,9 +89,17 @@ Se puede cortar en cualquier momento. Lo subido queda subido, lo bajado queda en
 
 ### Tarea programada
 
-Corre en el servidor de procesos (.126), desde `P:\rpa_ecdatos`, todos los días
-a la **01:00** con `--minutos 300`, para que termine antes del MEGA RPA de las
-8:00. Tiempos: unos 2 s por descarga y 5 s por archivo subido.
+Corre en el servidor **.64**, desde `P:\rpa_ecdatos`, todos los días a la
+**01:00** con `--minutos 300`, con el usuario `adminbi` y su sesión abierta
+(igual que la tarea del MEGA RPA en el .126). La lanza `correr_tablero.bat`, que
+anota inicio y fin en `logs\tarea_programada.log`.
+
+Tiempos (17-nov-2026): bajar 50 PDF toma 6 s; subirlos a SharePoint, unos 2 s
+por archivo con 3 lotes a la vez. Una cartera entera de 4.000 facturas sin PDF
+toma unas 2 horas y media la primera vez; después solo entra lo nuevo y son
+minutos. Por eso el robot también se puede correr a cualquier hora, a mano:
+`P:\rpa_ecdatos\correr_tablero.bat` desde cualquier PC con P:, o
+`schtasks /Run /TN "Autoconsumos - Robot tablero"` en el servidor.
 
 Orden de la noche: primero se actualiza el Excel, luego el caché (automático al
 guardarse), luego el robot. Si el robot corre antes que el caché, trabaja con la
@@ -109,8 +119,8 @@ cartera anterior y lo nuevo espera un día.
 
 | Síntoma | Dónde mirar | Qué suele ser |
 |---|---|---|
-| No hay fila `RPA_CORRIDA` de anoche | `P:\rpa_ecdatos\logs` | La tarea no corrió, o terminó con código 2 (clave del tablero) o 3 (EC Datos) |
-| Muchas `RPA_NO_ENCONTRADA` seguidas | El log, buscar `NO_ENCONTRADO` | Facturas no autorizadas aún, o el portal cambió sus controles (ver README del robot) |
+| No hay fila `RPA_CORRIDA` de anoche | `P:\rpa_ecdatos\logs\tarea_programada.log` | La tarea no corrió (sesión de adminbi cerrada), o terminó con código 2 (clave del tablero) o 3 (EC Datos) |
+| Muchas `RPA_NO_ENCONTRADA` seguidas | El log, buscar `NO_ENCONTRADA` | Facturas no autorizadas aún; si son todas, cambió el token o la API de EC Datos (ver README del robot) |
 | `ERROR_SUBIDA` en el CSV | El log, buscar `Lote` | El flujo Adjuntar no respondió en 150 s; relanzar |
 | La fila dice «Sin PDF» pero el PDF está en la carpeta | Propiedades del archivo en Respaldos | Falta `Factura` o `TipoRespaldo`: el archivo se subió a mano, no por el flujo |
 | «sin_permiso» en el log | Lista `Accesos` | La fila `RPA` no tiene `Rol = RPA` |
