@@ -70,6 +70,8 @@ por flujos de Power Automate:
    **Solo crea: nunca modifica ni borra.**
 6. **Reportar corrida** — el robot deja el resumen de cada noche y la lista de
    facturas que EC Datos no tenía.
+7. **Publicar archivo** — el robot deja `LIQUIDADO.xlsx` en `Respaldos/Reportes`:
+   el Excel de solo lectura con todas las entregadas. Se regenera en cada corrida.
 
 ### El flujo de una factura
 
@@ -149,6 +151,7 @@ editor de texto y se publica con un `git push`.
 - **Las contraseñas se guardan en texto plano** en la lista de accesos. La
   protección real es el permiso de esa lista. La solución de fondo es autenticar
   con Entra ID.
-- **Administración todavía no tiene las liquidadas en Excel.** En el tablero
-  ya están en la pestaña Liquidadas; falta un `LIQUIDADO.xlsx` aparte que se
-  regenere cada noche para Administración. El Excel base no se toca.
+- **Dos archivos, dos dueños.** El Excel base (hoja NO LIQUIDADO) lo edita
+  Administración y alimenta la cartera. `LIQUIDADO.xlsx` lo escribe el robot y
+  nadie lo edita: está en `Respaldos/Reportes` y se abre desde la pestaña
+  Liquidadas del tablero. Ninguno de los dos toca al otro.

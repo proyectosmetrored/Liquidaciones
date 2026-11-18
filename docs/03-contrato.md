@@ -286,6 +286,32 @@ fila `RPA_NO_ENCONTRADA` por factura. Con otro rol responde
 
 ---
 
+## Flujo 6 · Publicar archivo
+
+Solo el robot. Deja un archivo de reporte en `/Respaldos/Reportes/`; hoy, el
+Excel `LIQUIDADO.xlsx` que arma `rpa_ecdatos/exportar_liquidado.py` al final de
+cada corrida.
+
+### Envía
+
+```json
+{ "token": "…", "nombre": "LIQUIDADO.xlsx", "contenido": "<base64 del archivo>" }
+```
+
+### Responde
+
+```json
+{ "ok": true, "nombre": "LIQUIDADO.xlsx", "ruta": "Respaldos/Reportes/LIQUIDADO.xlsx", "accion": "reemplazado" }
+```
+
+`accion` es `creado` la primera vez y `reemplazado` después; SharePoint conserva
+las versiones anteriores. Con otro rol responde `{ "ok": false, "motivo": "sin_permiso" }`.
+«Obtener datos» ignora este archivo porque no tiene columna `Factura`, así que
+no aparece como respaldo de nadie. El tablero lo enlaza desde la pestaña
+Liquidadas (`CONFIG.RUTA_LIQUIDADO`) para ADMIN y OPERACIONES.
+
+---
+
 ## La auditoría
 
 Lista `AutoconsumosAuditoria`. Una fila por acción; nadie la edita.

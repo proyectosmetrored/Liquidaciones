@@ -235,6 +235,9 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
 @media (max-width:640px){.envoltura,.encabezado,.franja,.pie{padding-left:14px;padding-right:14px}}
 @media print{.filtros,.acciones,.acciones-arriba,.paginacion,.franja,.pestanas,.lote,.sesion{display:none}.contenedor-tabla{max-height:none}}
+.enlace-excel{float:right;font-size:.82rem;font-weight:600;color:#1f6f43;text-decoration:none;
+  border:1px solid #bfe3cc;background:#eef9f1;border-radius:8px;padding:4px 10px;margin-top:2px}
+.enlace-excel:hover{background:#dff3e6}
 </style>
 </head>
 <body>
@@ -380,7 +383,9 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   <!-- ============ DETALLE ============ -->
   <div id="vistaDetalle">
         <section class="tarjeta">
-          <h2><span id="tituloTabla">Pendientes</span> <span class="extra" id="resumenTabla">—</span></h2>
+          <h2><span id="tituloTabla">Pendientes</span> <span class="extra" id="resumenTabla">—</span>
+            <a id="enlaceLiquidado" class="enlace-excel oculto" target="_blank" rel="noopener noreferrer"
+               title="Excel de solo lectura con todas las entregadas. Lo regenera el robot en cada corrida.">📊 Descargar LIQUIDADO.xlsx</a></h2>
 
           <div class="lote" id="barraLote" style="display:none">
             <b id="loteConteo">0 seleccionadas</b>
@@ -531,6 +536,11 @@ const CONFIG = {
   /* (3b bis) Raíz del sitio de SharePoint. Solo se usa para armar el
           enlace del PDF cuando el flujo devuelve una ruta relativa.     */
   SITIO_SHAREPOINT: "https://metroredec.sharepoint.com/sites/Autoconsumos",
+
+  /* Excel de solo lectura con las facturas entregadas. Lo regenera el robot
+     al final de cada corrida (rpa_ecdatos/exportar_liquidado.py) y queda en
+     la biblioteca Respaldos. Vacío = no se muestra el enlace.              */
+  RUTA_LIQUIDADO: "Respaldos/Reportes/LIQUIDADO.xlsx",
 
   /* (3b ter) Nombre de la lista donde vive el registro de gestión. Se usa
           para armar el enlace al PDF adjunto de cada fila.             */
@@ -853,6 +863,7 @@ async function abrirApp(){
   $("vistaAnalisis").classList.add("oculto");
   $("notaRegla").classList.remove("oculto");
   $("campoSeguimiento").classList.remove("oculto");
+  $("enlaceLiquidado").classList.add("oculto");
   await cargarDatos();
 }
 
@@ -1079,6 +1090,10 @@ function cambiarVista(vista){
      El filtro Respaldo se queda: todas tienen PDF, pero sirve por foto. */
   $("zonaPdf").classList.toggle("oculto", liq || !CONFIG.SUBIR_URL || !puedeAdjuntar());
   $("notaRegla").classList.toggle("oculto", liq);
+  /* El Excel LIQUIDADO lo ven ADMIN y OPERACIONES desde la pestaña Liquidadas. */
+  const verExcel = liq && vistaAmplia() && !!CONFIG.RUTA_LIQUIDADO;
+  $("enlaceLiquidado").classList.toggle("oculto", !verExcel);
+  if (verExcel) $("enlaceLiquidado").href = urlRespaldo(CONFIG.RUTA_LIQUIDADO);
   if (liq) seleccion.clear();
   aplicar();
 }

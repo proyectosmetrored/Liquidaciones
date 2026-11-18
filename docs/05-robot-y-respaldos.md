@@ -22,7 +22,7 @@ lo que deja.
                                 ▼              ▼
                      Flujos HTTP de Power Automate
                        Verificar · Obtener datos · Marcar
-                       Adjuntar respaldo · Reportar corrida
+                       Adjuntar respaldo · Reportar corrida · Publicar archivo
                                 │
               ┌─────────────────┼──────────────────┐
               ▼                 ▼                  ▼
@@ -32,7 +32,8 @@ lo que deja.
 
 | Pieza | Dónde | Qué guarda |
 |---|---|---|
-| Biblioteca `Respaldos` | sitio Autoconsumos | Una carpeta por centro (`Kennedy`, `Alborada`, `Ciudad Celeste`…). Cada archivo lleva `Factura`, `Centro`, `TipoRespaldo` (PDF o FOTO), `Origen`, `Corrida` |
+| Biblioteca `Respaldos` | sitio Autoconsumos | Una carpeta por centro (`Kennedy`, `Alborada`, `Ciudad Celeste`…). Cada archivo lleva `Factura`, `Centro`, `TipoRespaldo` (PDF o FOTO), `Origen`, `Corrida`. Columnas `Centro`, `Factura` y `TipoRespaldo` **indexadas** para pasar de 5.000 archivos |
+| Carpeta `Respaldos/Reportes` | sitio Autoconsumos | `LIQUIDADO.xlsx`, el Excel de solo lectura con las entregadas. Lo regenera el robot; Administración y Operaciones lo leen |
 | Lista `AutoconsumosAuditoria` | sitio Autoconsumos | Una fila por acción. Ver el contrato, sección «La auditoría» |
 | Lista `Accesos` | sitio EquipamientoConsultorios | Usuarios de ambos sistemas. Columnas `Title`, `field_1` (clave), `CentroMedico`, `Rol`, `Ciudad`, `Sistema` |
 | Robot | `P:\rpa_ecdatos` | Código, configuración, caché de PDF, logs y resultados |
@@ -63,6 +64,7 @@ Carpeta `P:\rpa_ecdatos`, con su propio `README.md` detallado. Lo esencial:
 |---|---|
 | `subir_tablero.py` | La corrida: entra como `RPA`, pide la cartera, baja de EC Datos lo que no tiene PDF y lo sube de 10 en 10 |
 | `descargar.py` | Baja PDF por lista de números a una carpeta, sin tocar el tablero. Sirve para preparar cargas masivas manuales |
+| `exportar_liquidado.py` | Arma `LIQUIDADO.xlsx` (hojas LIQUIDADO y RESUMEN) con la cartera fresca y lo publica con el flujo «Publicar archivo». Lo llama `subir_tablero.py` al terminar |
 | `ecdatos.py` | El cliente de la API directa de EC Datos: una dirección por factura devuelve el PDF, sin iniciar sesión. Ocho descargas a la vez |
 | `ecdatos_api.py` | Método anterior (entraba al portal como una persona). Ya no se usa; queda de respaldo |
 | `config_tablero.py` | Direcciones de los flujos y la clave del usuario `RPA`. **No se versiona** |
@@ -114,6 +116,10 @@ cartera anterior y lo nuevo espera un día.
 - **Administración** ve lo mismo para todos los centros, con filtro por ciudad,
   y en la auditoría una fila `RPA_CORRIDA` por noche con el resumen.
 - **Operaciones** ve todo y no toca nada.
+- **Administración y Operaciones** tienen además, en la pestaña Liquidadas, el
+  botón «Descargar LIQUIDADO.xlsx»: una fila por entregada con los datos del
+  Excel base, quién entregó, cuándo, si tiene PDF y cuántas fotos; y una hoja
+  RESUMEN por centro. Se regenera en cada corrida del robot.
 
 ## 5.5 Si algo falla
 
@@ -122,5 +128,7 @@ cartera anterior y lo nuevo espera un día.
 | No hay fila `RPA_CORRIDA` de anoche | `P:\rpa_ecdatos\logs\tarea_programada.log` | La tarea no corrió (sesión de adminbi cerrada), o terminó con código 2 (clave del tablero) o 3 (EC Datos) |
 | Muchas `RPA_NO_ENCONTRADA` seguidas | El log, buscar `NO_ENCONTRADA` | Facturas no autorizadas aún; si son todas, cambió el token o la API de EC Datos (ver README del robot) |
 | `ERROR_SUBIDA` en el CSV | El log, buscar `Lote` | El flujo Adjuntar no respondió en 150 s; relanzar |
+| El tablero no carga («No se pudo obtener datos») o tarda más de 2 min | Historial del flujo «Obtener datos» | La biblioteca creció y el flujo lee de a 100: debe tener `$top` 5000 (18-nov-2026). Si pasó de 5.000 archivos, faltan las columnas indexadas |
+| `LIQUIDADO.xlsx` desactualizado | `logs\tablero_<corrida>.log`, buscar `Excel` | `URL_PUBLICAR` vacía en `config_tablero.py`, o la carpeta `Reportes` no existe |
 | La fila dice «Sin PDF» pero el PDF está en la carpeta | Propiedades del archivo en Respaldos | Falta `Factura` o `TipoRespaldo`: el archivo se subió a mano, no por el flujo |
 | «sin_permiso» en el log | Lista `Accesos` | La fila `RPA` no tiene `Rol = RPA` |
