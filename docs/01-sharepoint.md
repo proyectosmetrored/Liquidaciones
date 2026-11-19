@@ -41,6 +41,10 @@ El conector de Excel de Power Automate **no lee hojas sueltas: lee tablas.**
 5. Con la tabla seleccionada: **Diseño de tabla → Nombre de la tabla**, escriba
    `TablaNoLiquidado`.
 6. Guarde.
+7. Repita los pasos 2 a 6 en la hoja **`LIQUIDADO`** con el nombre
+   `TablaLiquidado` (19-nov-2026). El flujo «Actualizar caché» también lee esa
+   tabla y deja `/Cache/_liquidado.json`; así el tablero muestra en Liquidadas
+   lo que Administración ya cerró. Las dos hojas llevan las mismas columnas.
 
 > Si el archivo lo regenera un proceso automático que borra la tabla en cada
 > actualización, use la alternativa del final de este documento.

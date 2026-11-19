@@ -14,7 +14,7 @@ lo que deja.
 
 ```
   Excel BASE AUTOCONSUMOS            EC Datos (clientes.ecdatos.com)
-  hoja NO LIQUIDADO                            │
+  hojas NO LIQUIDADO y LIQUIDADO               │
          │ al guardarse                         │ cada noche
          ▼                                      ▼
   Actualizar caché  ──►  /Cache/*.json   ◄──  Robot (P:\rpa_ecdatos)
@@ -33,7 +33,8 @@ lo que deja.
 | Pieza | Dónde | Qué guarda |
 |---|---|---|
 | Biblioteca `Respaldos` | sitio Autoconsumos | Una carpeta por centro (`Kennedy`, `Alborada`, `Ciudad Celeste`…). Cada archivo lleva `Factura`, `Centro`, `TipoRespaldo` (PDF o FOTO), `Origen`, `Corrida`. Columnas `Centro`, `Factura` y `TipoRespaldo` **indexadas** para pasar de 5.000 archivos |
-| Carpeta `Respaldos/Reportes` | sitio Autoconsumos | `LIQUIDADO.xlsx`, el Excel de solo lectura con las entregadas. Lo regenera el robot; Administración y Operaciones lo leen |
+| Carpeta `Respaldos/Reportes` | sitio Autoconsumos | `LIQUIDADO.xlsx`, el Excel de solo lectura con todas las liquidadas (entregadas en el tablero + hoja LIQUIDADO del Excel base). Lo regenera el robot; Administración y Operaciones lo leen |
+| `Cache/_liquidado.json` | sitio Autoconsumos | La hoja LIQUIDADO del Excel base, que «Actualizar caché» deja con la misma forma que los demás JSON del caché (tabla `TablaLiquidado`) |
 | Lista `AutoconsumosAuditoria` | sitio Autoconsumos | Una fila por acción. Ver el contrato, sección «La auditoría» |
 | Lista `Accesos` | sitio EquipamientoConsultorios | Usuarios de ambos sistemas. Columnas `Title`, `field_1` (clave), `CentroMedico`, `Rol`, `Ciudad`, `Sistema` |
 | Robot | `P:\rpa_ecdatos` | Código, configuración, caché de PDF, logs y resultados |
@@ -64,7 +65,7 @@ Carpeta `P:\rpa_ecdatos`, con su propio `README.md` detallado. Lo esencial:
 |---|---|
 | `subir_tablero.py` | La corrida: entra como `RPA`, pide la cartera, baja de EC Datos lo que no tiene PDF y lo sube de 10 en 10 |
 | `descargar.py` | Baja PDF por lista de números a una carpeta, sin tocar el tablero. Sirve para preparar cargas masivas manuales |
-| `exportar_liquidado.py` | Arma `LIQUIDADO.xlsx` (hojas LIQUIDADO y RESUMEN) con la cartera fresca y lo publica con el flujo «Publicar archivo». Lo llama `subir_tablero.py` al terminar |
+| `exportar_liquidado.py` | Arma `LIQUIDADO.xlsx` (hojas LIQUIDADO y RESUMEN) con las entregadas del tablero y la hoja LIQUIDADO del Excel base, y lo publica con el flujo «Publicar archivo». Lo llama `subir_tablero.py` al terminar |
 | `ecdatos.py` | El cliente de la API directa de EC Datos: una dirección por factura devuelve el PDF, sin iniciar sesión. Ocho descargas a la vez |
 | `ecdatos_api.py` | Método anterior (entraba al portal como una persona). Ya no se usa; queda de respaldo |
 | `config_tablero.py` | Direcciones de los flujos y la clave del usuario `RPA`. **No se versiona** |
@@ -116,10 +117,15 @@ cartera anterior y lo nuevo espera un día.
 - **Administración** ve lo mismo para todos los centros, con filtro por ciudad,
   y en la auditoría una fila `RPA_CORRIDA` por noche con el resumen.
 - **Operaciones** ve todo y no toca nada.
+- **Liquidada** es la que un centro entregó desde el tablero **o** la que
+  Administración pasó a la hoja LIQUIDADO del Excel base. Las dos salen en la
+  pestaña Liquidadas (la del Excel con la marca «Administración · hoja
+  LIQUIDADO», sin botones) y cuentan en los indicadores y en el análisis.
 - **Administración y Operaciones** tienen además, en la pestaña Liquidadas, el
-  botón «Descargar LIQUIDADO.xlsx»: una fila por entregada con los datos del
-  Excel base, quién entregó, cuándo, si tiene PDF y cuántas fotos; y una hoja
-  RESUMEN por centro. Se regenera en cada corrida del robot.
+  botón «Descargar LIQUIDADO.xlsx»: una fila por liquidada con los datos del
+  Excel base, dónde se liquidó (Tablero / Excel base), quién entregó, cuándo,
+  si tiene PDF y cuántas fotos; y una hoja RESUMEN por centro. Se regenera en
+  cada corrida del robot.
 
 ## 5.5 Si algo falla
 
@@ -130,5 +136,6 @@ cartera anterior y lo nuevo espera un día.
 | `ERROR_SUBIDA` en el CSV | El log, buscar `Lote` | El flujo Adjuntar no respondió en 150 s; relanzar |
 | El tablero no carga («No se pudo obtener datos») o tarda más de 2 min | Historial del flujo «Obtener datos» | La biblioteca creció y el flujo lee de a 100: debe tener `$top` 5000 (18-nov-2026). Si pasó de 5.000 archivos, faltan las columnas indexadas |
 | `LIQUIDADO.xlsx` desactualizado | `logs\tablero_<corrida>.log`, buscar `Excel` | `URL_PUBLICAR` vacía en `config_tablero.py`, o la carpeta `Reportes` no existe |
+| Una factura que Administración ya pasó a la hoja LIQUIDADO no sale en Liquidadas | Biblioteca `Cache`: ¿existe `_liquidado.json` y es de hoy? Historial de «Actualizar caché» | La tabla `TablaLiquidado` no existe o no cubre las filas nuevas (Insertar → Tabla en la hoja LIQUIDADO), o el flujo falló al guardar el Excel |
 | La fila dice «Sin PDF» pero el PDF está en la carpeta | Propiedades del archivo en Respaldos | Falta `Factura` o `TipoRespaldo`: el archivo se subió a mano, no por el flujo |
 | «sin_permiso» en el log | Lista `Accesos` | La fila `RPA` no tiene `Rol = RPA` |

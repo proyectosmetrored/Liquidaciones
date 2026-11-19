@@ -42,7 +42,7 @@ completa, no solo los datos.
 
 ```
   Excel BASE AUTOCONSUMOS            EC Datos (portal de facturación)
-  hoja NO LIQUIDADO                            │
+  hojas NO LIQUIDADO y LIQUIDADO               │
          │ al guardarse                         │ cada noche
          ▼                                      ▼
   Actualizar caché  ──►  /Cache/*.json   ◄──  Robot (P:\rpa_ecdatos)
@@ -61,9 +61,11 @@ por flujos de Power Automate:
 1. **Verificar acceso** — recibe usuario y contraseña, devuelve un *token* de
    sesión con el rol. La contraseña no vuelve a viajar.
 2. **Actualizar caché** — se dispara cuando el Excel se modifica y deja un JSON
-   por centro. Nadie lo espera.
-3. **Obtener datos** — con el token, devuelve la cartera del centro, sus
-   entregas, sus respaldos (PDF y fotos) y los avisos del robot.
+   por centro con la hoja NO LIQUIDADO, más `_liquidado.json` con la hoja
+   LIQUIDADO. Nadie lo espera.
+3. **Obtener datos** — con el token, devuelve la cartera del centro, lo que
+   Administración ya liquidó en el Excel, sus entregas, sus respaldos (PDF y
+   fotos) y los avisos del robot.
 4. **Adjuntar respaldo** — guarda PDF y fotos en la biblioteca `Respaldos`, en
    la carpeta del centro. **No entrega.** Lo usan el tablero y el robot.
 5. **Marcar facturas** — registra la entrega. Exige que la factura tenga PDF.
@@ -83,6 +85,9 @@ por flujos de Power Automate:
    lo dice y ahí sí ella adjunta el PDF a mano o toma una foto.
 5. La entrega queda en SharePoint, firmada, y equivale a liquidada: la factura
    sale de la pestaña **Pendientes** y pasa a **Liquidadas**, donde solo se mira.
+6. Lo que Administración cierra por su cuenta, pasándolo a la hoja LIQUIDADO
+   del Excel, aparece también en **Liquidadas** (con la marca «Administración ·
+   hoja LIQUIDADO») y en `LIQUIDADO.xlsx`. No hace falta entregarlo.
 
 ## Puesta en marcha
 
@@ -151,7 +156,8 @@ editor de texto y se publica con un `git push`.
 - **Las contraseñas se guardan en texto plano** en la lista de accesos. La
   protección real es el permiso de esa lista. La solución de fondo es autenticar
   con Entra ID.
-- **Dos archivos, dos dueños.** El Excel base (hoja NO LIQUIDADO) lo edita
-  Administración y alimenta la cartera. `LIQUIDADO.xlsx` lo escribe el robot y
-  nadie lo edita: está en `Respaldos/Reportes` y se abre desde la pestaña
-  Liquidadas del tablero. Ninguno de los dos toca al otro.
+- **Dos archivos, dos dueños.** El Excel base lo edita Administración: la hoja
+  NO LIQUIDADO alimenta la cartera y la hoja LIQUIDADO dice qué cerró ella.
+  `LIQUIDADO.xlsx` lo escribe el robot y nadie lo edita: junta las entregadas
+  del tablero con la hoja LIQUIDADO, está en `Respaldos/Reportes` y se abre
+  desde la pestaña Liquidadas del tablero. Ninguno de los dos toca al otro.

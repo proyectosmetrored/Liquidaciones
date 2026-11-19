@@ -896,6 +896,16 @@ async function cargarDatos(){
     $("textoCarga").innerHTML = '<span style="color:var(--alerta)">' + esc(e.message) + "</span>";
     return;
   }
+  /* Hoja LIQUIDADO del Excel base: lo que Administración ya cerró. Llega
+     aparte (bloque `liquidadas`, misma forma que `filas`) y se marca con
+     lx = true. Si una factura está en las dos hojas, manda LIQUIDADO. */
+  let liquidadasExcel = [];
+  try { liquidadasExcel = normalizarFilas(data.liquidadas || []); } catch(e){ liquidadasExcel = []; }
+  if (liquidadasExcel.length){
+    const enExcel = new Set(liquidadasExcel.map(r => r.f));
+    liquidadasExcel.forEach(r => { r.lx = true; });
+    DATOS = DATOS.filter(r => !enExcel.has(r.f)).concat(liquidadasExcel);
+  }
 
   MARCAS = {};
   (data.marcas || []).forEach(m => {
@@ -949,6 +959,9 @@ let filtrados = [], pagina = 1, orden = {col:"dias", asc:false};
    por pestaña; lo usan los indicadores y el análisis. */
 let VISTA = "detalle", FILTRADOS_TODOS = [];
 const enLiquidadas = () => VISTA === "liquidadas";
+/* Liquidada = entregada en el tablero (marca) o cerrada por Administración
+   en la hoja LIQUIDADO del Excel base (lx). Entregar equivale a liquidar. */
+const liquidada = r => !!(MARCAS[r.f] || r.lx);
 const seleccion = new Set();
 
 const unicos = campo => [...new Set(DATOS.map(r => r[campo]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
@@ -996,7 +1009,7 @@ function aplicar(){
     return true;
   });
   const liq = enLiquidadas();
-  filtrados = FILTRADOS_TODOS.filter(r => liq ? !!MARCAS[r.f] : !MARCAS[r.f]);
+  filtrados = FILTRADOS_TODOS.filter(r => liq ? liquidada(r) : !liquidada(r));
   ordenar();
   pagina = 1;
   guardarFiltros();
@@ -1033,7 +1046,7 @@ function ordenar(){
 /* ========================= Indicadores ========================= */
 function pintarKpis(){
   if (!vistaAmplia()) return;          // los centros no ven indicadores
-  const todos = FILTRADOS_TODOS, pendientes = todos.filter(r => !MARCAS[r.f]);
+  const todos = FILTRADOS_TODOS, pendientes = todos.filter(r => !liquidada(r));
   const total = pendientes.length;
   const pend  = pendientes.reduce((a,r) => a + r.s, 0);
   const valor = pendientes.reduce((a,r) => a + r.v, 0);
@@ -1042,7 +1055,7 @@ function pintarKpis(){
   const pct = todos.length ? marcadas/todos.length*100 : 0;
   const dias = total ? pendientes.reduce((a,r)=>a+r.dias,0)/total : 0;
   const filtrando = todos.length !== DATOS.length;
-  const pendCartera = DATOS.filter(r => !MARCAS[r.f]).length;
+  const pendCartera = DATOS.filter(r => !liquidada(r)).length;
 
   const tarjetas = [
     ["Facturas pendientes", entero(total),
@@ -1062,11 +1075,11 @@ function pintarKpis(){
 }
 
 function actualizarContadores(){
-  const marcadas = DATOS.filter(r => MARCAS[r.f]).length;
+  const marcadas = DATOS.filter(liquidada).length;
   $("cTotal").textContent     = entero(DATOS.length);
   $("cMarcadas").textContent  = entero(marcadas);
   $("cSinMarcar").textContent = entero(DATOS.length - marcadas);
-  $("cConPdf").textContent    = entero(DATOS.filter(r => !MARCAS[r.f] && pdfDe(r.f)).length);
+  $("cConPdf").textContent    = entero(DATOS.filter(r => !liquidada(r) && pdfDe(r.f)).length);
   /* Sobre la cartera completa, no sobre lo filtrado: el avance de una
      supervisora no cambia porque acote la vista a un convenio. */
   const pct = DATOS.length ? marcadas / DATOS.length * 100 : 0;
@@ -1112,14 +1125,14 @@ function pintarTabla(){
 
   if (!total){
     $("cuerpoTabla").innerHTML = '<tr><td colspan="12" class="vacio">' +
-      (enLiquidadas() && !FILTRADOS_TODOS.some(r => MARCAS[r.f])
-        ? "Todavía no hay facturas liquidadas. Al entregar una desde Pendientes aparece aquí."
+      (enLiquidadas() && !FILTRADOS_TODOS.some(liquidada)
+        ? "Todavía no hay facturas liquidadas. Al entregar una desde Pendientes aparece aquí, igual que las que Administración cierra en la hoja LIQUIDADO del Excel."
         : "No se encontraron facturas con los filtros aplicados.") + "</td></tr>";
   } else {
     $("cuerpoTabla").innerHTML = trozo.map(r => {
       const marca = MARCAS[r.f], sel = seleccion.has(r.f);
       const pdf = pdfDe(r.f), fotos = fotosDe(r.f), aviso = AVISOS[r.f];
-      const clase = marca ? " class=\"bloqueada\"" : (sel ? ' class="seleccionada"' : "");
+      const clase = (marca || r.lx) ? " class=\"bloqueada\"" : (sel ? ' class="seleccionada"' : "");
       const pastillaEdad = r.tramo === 3 ? "p-viejo" : "p-no";
 
       /* Columna Respaldo: el PDF (del robot o subido a mano), las fotos y
@@ -1138,7 +1151,9 @@ function pintarTabla(){
         celdaResp += '<span class="sello fotos">📷 ' + fotos.map((x,i) =>
           '<a href="' + esc(urlRespaldo(x.u)) + '" target="_blank" rel="noopener noreferrer" title="' +
           esc(x.n) + '">foto ' + (i+1) + "</a>").join(" ") + "</span>";
-      if (puedeAdjuntar())
+      /* Sin botón Foto en las liquidadas del Excel: ya no están en la
+         cartera y el flujo Adjuntar las rechazaría. */
+      if (puedeAdjuntar() && !r.lx)
         celdaResp += '<br><button class="btn-foto" data-foto="' + esc(r.f) + '" title="Tomar o elegir una foto de respaldo">📷 Foto</button>';
 
       /* Registro antiguo: el PDF iba adjunto a la fila de la lista. */
@@ -1150,6 +1165,9 @@ function pintarTabla(){
         ? '<span class="pastilla p-ok">🔒 Entregada</span>' + adjunto +
           '<span class="sello">' + esc(marca.por || marca.centro) +
           (marca.en ? "<br>" + esc(selloLegible(marca.en)) : "") + "</span>"
+        : r.lx
+          ? '<span class="pastilla p-ok">✔ Liquidada</span>' +
+            '<span class="sello">Administración · hoja LIQUIDADO del Excel base</span>'
         : !puedeEntregar()
           ? '<span class="pastilla p-no">Pendiente</span>'
           : pdf
@@ -1158,12 +1176,14 @@ function pintarTabla(){
 
       const celdaObs = marca
         ? '<span class="obs-fija' + (marca.obs ? "" : " sin") + '">' + esc(marca.obs || "Sin observación") + "</span>"
+        : r.lx
+          ? '<span class="obs-fija sin">—</span>'
         : !puedeEntregar()
           ? '<span class="obs-fija sin">—</span>'
           : '<input type="text" class="obs' + (BORRADORES[r.f] ? " lleno" : "") + '" data-obs="' + esc(r.f) +
             '" value="' + esc(BORRADORES[r.f] || "") + '" placeholder="Anotar antes de entregar…" maxlength="300">';
 
-      const seleccionable = !marca && pdf && puedeEntregar();
+      const seleccionable = !marca && !r.lx && pdf && puedeEntregar();
       return "<tr" + clase + ">" +
         '<td>' + (!seleccionable ? "" :
           '<input type="checkbox" class="chk sel" data-sel="' + esc(r.f) + '"' + (sel?" checked":"") + ">") + "</td>" +
@@ -1182,7 +1202,7 @@ function pintarTabla(){
     }).join("");
   }
 
-  const marcables = puedeEntregar() ? trozo.filter(r => !MARCAS[r.f] && pdfDe(r.f)) : [];
+  const marcables = puedeEntregar() ? trozo.filter(r => !liquidada(r) && pdfDe(r.f)) : [];
   $("chkTodas").checked  = marcables.length > 0 && marcables.every(r => seleccion.has(r.f));
   $("chkTodas").disabled = marcables.length === 0;
   $("chkTodas").style.visibility = puedeEntregar() && !enLiquidadas() ? "" : "hidden";
@@ -1235,7 +1255,7 @@ function conectarTabla(){
   $("chkTodas").onchange = ev => {
     const desde = (pagina-1)*POR_PAGINA;
     filtrados.slice(desde, desde+POR_PAGINA)
-      .filter(r => !MARCAS[r.f] && pdfDe(r.f))
+      .filter(r => !liquidada(r) && pdfDe(r.f))
       .forEach(r => ev.target.checked ? seleccion.add(r.f) : seleccion.delete(r.f));
     pintarTabla();
   };
@@ -1827,7 +1847,10 @@ function agrupar(filas, clave, valorFn){
 }
 
 function pintarAnalisis(){
-  const filtrados = FILTRADOS_TODOS;   // el análisis mira pendientes y liquidadas
+  /* Los gráficos de pendiente miran solo lo no liquidado. El avance y el
+     cuadro por centro miran todo: pendientes, entregadas en el tablero y
+     liquidadas en la hoja LIQUIDADO del Excel base. */
+  const todos = FILTRADOS_TODOS, filtrados = todos.filter(r => !liquidada(r));
   if (!vistaAmplia()) return;          // la vista de análisis es de ADMIN y OPERACIONES
   const meses = [...new Set(filtrados.map(r => r.d.slice(0,7)).filter(Boolean))].sort();
   const porMes = meses.map(m => {
@@ -1861,27 +1884,27 @@ function pintarAnalisis(){
     "var(--serie-1)", compacto,
     s => "<b>" + s.etiqueta + "</b><br>Pendiente: " + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
 
-  const marcadas = filtrados.filter(r => MARCAS[r.f]);
+  const marcadas = todos.filter(liquidada);
   barras("gAvance", [
     {etiqueta:"Liquidadas", valor: marcadas.reduce((a,r)=>a+r.s,0), n: marcadas.length},
-    {etiqueta:"Pendientes", valor: totalPend - marcadas.reduce((a,r)=>a+r.s,0), n: filtrados.length - marcadas.length}
+    {etiqueta:"Pendientes", valor: totalPend, n: filtrados.length}
   ], "var(--serie-1)", compacto,
     s => "<b>" + s.etiqueta + "</b><br>" + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
 
   if (!vistaAmplia()) return;
 
-  const porCentro = agrupar(filtrados, r => r.c, () => 0).map(g => {
-    const filas = filtrados.filter(r => r.c === g.etiqueta);
+  const porCentro = agrupar(todos, r => r.c, () => 0).map(g => {
+    const filas = todos.filter(r => r.c === g.etiqueta), pend = filas.filter(r => !liquidada(r));
     return {centro: g.etiqueta, total: filas.length,
-            pend: filas.reduce((a,r)=>a+r.s,0),
-            viejo: filas.filter(r=>r.tramo===3).reduce((a,r)=>a+r.s,0),
-            conPdf: filas.filter(r => pdfDe(r.f)).length,
-            marcadas: filas.filter(r => MARCAS[r.f]).length};
+            pend: pend.reduce((a,r)=>a+r.s,0),
+            viejo: pend.filter(r=>r.tramo===3).reduce((a,r)=>a+r.s,0),
+            conPdf: pend.filter(r => pdfDe(r.f)).length,
+            marcadas: filas.filter(liquidada).length};
   }).sort((a,b) => b.pend - a.pend);
 
   $("tablaCentros").innerHTML =
     "<thead><tr><th>Centro</th><th class='num'>Facturas</th><th class='num'>Pendiente</th>" +
-    "<th class='num'>&gt; 90 días</th><th class='num'>Con PDF</th><th class='num'>Liquidadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
+    "<th class='num'>&gt; 90 días</th><th class='num'>Pendientes con PDF</th><th class='num'>Liquidadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
     (porCentro.length ? porCentro.map(c =>
       "<tr><td><b>" + esc(c.centro) + "</b></td>" +
       "<td class='num'>" + entero(c.total) + "</td>" +
@@ -1895,12 +1918,13 @@ function pintarAnalisis(){
 
 /* ========================= Descargas (CSV, sin librerías) ========================= */
 const COLUMNAS = ["Centro","Número factura","Fecha","Caja","Plan | Convenio","Valor","Saldo",
-                  "Días","PDF","Origen PDF","Fotos","Entregada","Entregada por","Entregada el","Observación"];
+                  "Días","PDF","Origen PDF","Fotos","Liquidada","Liquidada en","Entregada por","Entregada el","Observación"];
 function aFila(r){
   const m = MARCAS[r.f], p = pdfDe(r.f);
+  const donde = m && r.lx ? "Tablero y Excel base" : m ? "Tablero" : r.lx ? "Excel base" : "";
   return [r.c, r.f, fechaLarga(r.d), r.u, r.p, r.v.toFixed(2), r.s.toFixed(2), r.dias,
           p ? "SI" : "NO", p ? p.o : "", fotosDe(r.f).length,
-          m ? "SI" : "NO", m ? (m.por || m.centro) : "", m ? selloLegible(m.en) : "", m ? m.obs : ""];
+          liquidada(r) ? "SI" : "NO", donde, m ? (m.por || m.centro) : "", m ? selloLegible(m.en) : "", m ? m.obs : ""];
 }
 function descargarCsv(filas, nombre){
   /* La descarga es solo de ADMIN. Los botones ya están ocultos para los

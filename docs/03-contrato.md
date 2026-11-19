@@ -114,6 +114,11 @@ robot.
       "u": "MARIA … | 2026/04/20 16:48:40 | Autoconsumos: 30.50",
       "p": "Acuerdos Comerciales | PLAN NORMAL", "v": 30.5, "s": 30.5 }
   ],
+  "liquidadas": [
+    { "c": "Kennedy", "f": "013-111-000019870", "d": "2026-01-15",
+      "u": "MARIA … | 2026/01/15 10:02:11 | Autoconsumos: 12.00",
+      "p": "Acuerdos Comerciales | PLAN NORMAL", "v": 12, "s": 12 }
+  ],
   "marcas": [
     { "factura": "013-111-000024730", "centro": "CM KENNEDY",
       "observacion": "prueba", "marcadoPor": "CM KENNEDY",
@@ -138,7 +143,8 @@ robot.
 
 | Bloque | Qué es | Quién lo ve |
 |---|---|---|
-| `filas` | La cartera, proyectada del caché: `c` centro, `f` factura, `d` fecha, `u` caja, `p` plan, `v` valor, `s` saldo | CENTRO: solo su archivo `/Cache/<Centro>.json`. Los demás: `/Cache/_todos.json` |
+| `filas` | La cartera (hoja NO LIQUIDADO), proyectada del caché: `c` centro, `f` factura, `d` fecha, `u` caja, `p` plan, `v` valor, `s` saldo | CENTRO: solo su archivo `/Cache/<Centro>.json`. Los demás: `/Cache/_todos.json` |
+| `liquidadas` | La hoja LIQUIDADO del Excel base (lo que Administración ya cerró), misma forma que `filas`. Sale de `/Cache/_liquidado.json`; si el archivo no existe, llega `[]` | CENTRO: solo las de su centro |
 | `marcas` | Las entregas registradas en `AutoconsumosSeguimiento` | CENTRO: solo las suyas |
 | `respaldos` | Archivos de la biblioteca `Respaldos`: `f` factura, `t` `PDF` o `FOTO`, `n` nombre, `u` ruta completa, `o` quién lo subió, `e` cuándo | CENTRO: solo su carpeta |
 | `avisos` | Facturas que el robot no encontró en EC Datos (`RPA_NO_ENCONTRADA` en auditoría): `f` factura, `c` centro, `e` cuándo, `k` corrida | CENTRO: solo su centro |
