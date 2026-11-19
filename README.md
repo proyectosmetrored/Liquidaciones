@@ -62,7 +62,9 @@ por flujos de Power Automate:
    sesión con el rol. La contraseña no vuelve a viajar.
 2. **Actualizar caché** — se dispara cuando el Excel se modifica y deja un JSON
    por centro con la hoja NO LIQUIDADO, más `_liquidado.json` con la hoja
-   LIQUIDADO. Nadie lo espera.
+   LIQUIDADO. Lee las tablas `TablaNoLiquidado` y `TablaLiquidado` **por
+   nombre**: si alguien las rehace, deben conservar ese nombre y las mismas
+   15 columnas. Nadie lo espera.
 3. **Obtener datos** — con el token, devuelve la cartera del centro, lo que
    Administración ya liquidó en el Excel, sus entregas, sus respaldos (PDF y
    fotos) y los avisos del robot.

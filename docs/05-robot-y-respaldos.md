@@ -136,6 +136,7 @@ cartera anterior y lo nuevo espera un día.
 | `ERROR_SUBIDA` en el CSV | El log, buscar `Lote` | El flujo Adjuntar no respondió en 150 s; relanzar |
 | El tablero no carga («No se pudo obtener datos») o tarda más de 2 min | Historial del flujo «Obtener datos» | La biblioteca creció y el flujo lee de a 100: debe tener `$top` 5000 (18-nov-2026). Si pasó de 5.000 archivos, faltan las columnas indexadas |
 | `LIQUIDADO.xlsx` desactualizado | `logs\tablero_<corrida>.log`, buscar `Excel` | `URL_PUBLICAR` vacía en `config_tablero.py`, o la carpeta `Reportes` no existe |
+| El tablero muestra una cartera vieja (corte atrasado, faltan facturas o centros nuevos) | Historial de «Actualizar caché»: ejecuciones en rojo | Rehicieron las tablas del Excel con otro nombre o cambiaron los encabezados. Deben llamarse `TablaNoLiquidado` y `TablaLiquidado` y conservar las 15 columnas. (16-nov-2026: el archivo nuevo dejó el flujo caído tres días; se arregló leyendo las tablas por nombre) |
 | Una factura que Administración ya pasó a la hoja LIQUIDADO no sale en Liquidadas | Biblioteca `Cache`: ¿existe `_liquidado.json` y es de hoy? Historial de «Actualizar caché» | La tabla `TablaLiquidado` no existe o no cubre las filas nuevas (Insertar → Tabla en la hoja LIQUIDADO), o el flujo falló al guardar el Excel |
 | La fila dice «Sin PDF» pero el PDF está en la carpeta | Propiedades del archivo en Respaldos | Falta `Factura` o `TipoRespaldo`: el archivo se subió a mano, no por el flujo |
 | «sin_permiso» en el log | Lista `Accesos` | La fila `RPA` no tiene `Rol = RPA` |
