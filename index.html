@@ -306,10 +306,14 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     <h2>Filtros <span class="extra">Los indicadores y los gráficos responden a lo que filtre aquí</span></h2>
     <div class="filtros">
       <div class="campo"><label for="fBusqueda">Buscar</label>
-        <input type="text" id="fBusqueda" placeholder="Factura, convenio, caja…" autocomplete="off"></div>
+        <input type="text" id="fBusqueda" placeholder="Factura, convenio, ejecutivo…" autocomplete="off"></div>
       <div class="campo oculto" id="campoCiudad"><label for="fCiudad">Ciudad</label><select id="fCiudad"></select></div>
       <div class="campo oculto" id="campoCentro"><label for="fCentro">Centro</label><select id="fCentro"></select></div>
-      <div class="campo"><label for="fMes">Mes de emisión</label><select id="fMes"></select></div>
+      <div class="campo"><label for="fDesde">Fecha desde</label><input type="date" id="fDesde"></div>
+      <div class="campo"><label for="fHasta">Fecha hasta</label><input type="date" id="fHasta"></div>
+      <div class="campo"><label for="fEjecutivo">Ejecutivo</label>
+        <input type="text" id="fEjecutivo" list="listaEjecutivos" placeholder="Todos · escribe un nombre" autocomplete="off">
+        <datalist id="listaEjecutivos"></datalist></div>
       <div class="campo"><label for="fPlan">Plan / Convenio</label><select id="fPlan"></select></div>
       <div class="campo"><label for="fAntiguedad">Antigüedad del saldo</label><select id="fAntiguedad">
         <option value="">Cualquiera</option><option value="0">Hasta 30 días</option>
@@ -408,7 +412,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
                 <th class="ordenable" data-col="c">Centro <span class="flecha">↕</span></th>
                 <th class="ordenable" data-col="f">Número factura <span class="flecha">↕</span></th>
                 <th class="ordenable" data-col="d">Fecha <span class="flecha">↕</span></th>
-                <th>Caja</th>
+                <th class="ordenable" data-col="e">Ejecutivo <span class="flecha">↕</span></th>
                 <th class="ordenable" data-col="p">Plan / Convenio <span class="flecha">↕</span></th>
                 <th class="ordenable num" data-col="v">Valor <span class="flecha">↕</span></th>
                 <th class="ordenable num" data-col="s">Saldo <span class="flecha">↕</span></th>
@@ -916,6 +920,8 @@ async function cargarDatos(){
     liquidadasExcel.forEach(r => { r.lx = true; });
     DATOS = DATOS.filter(r => !enExcel.has(r.f)).concat(liquidadasExcel);
   }
+  /* Ejecutivo: solo el nombre de «User Caja» (lo que va antes del primer |). */
+  DATOS.forEach(r => { r.e = cajaCorta(r.u); });
 
   MARCAS = {};
   (data.marcas || []).forEach(m => {
@@ -958,10 +964,10 @@ async function cargarDatos(){
 
 /* ========================= Filtros ========================= */
 const POR_PAGINA = 100;
-const CAMPOS = ["fBusqueda","fCiudad","fCentro","fMes","fPlan","fAntiguedad","fSeguimiento"];
-const ETIQUETAS = {fBusqueda:"Búsqueda", fCiudad:"Ciudad", fCentro:"Centro", fMes:"Mes",
-                   fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Respaldo"};
-const CLAVE_FILTROS = "autoconsumos.filtros.v4";
+const CAMPOS = ["fBusqueda","fCiudad","fCentro","fDesde","fHasta","fEjecutivo","fPlan","fAntiguedad","fSeguimiento"];
+const ETIQUETAS = {fBusqueda:"Búsqueda", fCiudad:"Ciudad", fCentro:"Centro", fDesde:"Desde", fHasta:"Hasta",
+                   fEjecutivo:"Ejecutivo", fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Respaldo"};
+const CLAVE_FILTROS = "autoconsumos.filtros.v5";
 let filtrados = [], pagina = 1, orden = {col:"dias", asc:false};
 /* Pestaña activa: "detalle" (pendientes), "liquidadas" o "analisis".
    Entregar equivale a liquidar: la factura sale de Pendientes y pasa a
@@ -984,9 +990,12 @@ function inicializarFiltros(){
   llenar("fCiudad", [...new Set(DATOS.map(r => ciudadDe(r.c)))].sort(), "Todas las ciudades");
   llenar("fCentro", unicos("c"), "Todos los centros");
   llenar("fPlan",   unicos("p"), "Todos los planes");
-  const meses = [...new Set(DATOS.map(r => r.d.slice(0,7)).filter(Boolean))].sort();
-  llenar("fMes", meses, "Todos los meses",
-    ym => mesCorto(ym).replace(/^./,c=>c.toUpperCase()) + " (" + ym.slice(0,4) + ")");
+  /* Rango de fechas de emisión: los calendarios no dejan salir de lo que hay. */
+  const fechas = DATOS.map(r => r.d).filter(Boolean).sort();
+  ["fDesde","fHasta"].forEach(id => {
+    $(id).min = fechas[0] || ""; $(id).max = fechas[fechas.length-1] || "";
+  });
+  $("listaEjecutivos").innerHTML = unicos("e").map(n => '<option value="' + esc(n) + '">').join("");
   try {
     const guardados = JSON.parse(localStorage.getItem(CLAVE_FILTROS) || "{}");
     CAMPOS.forEach(id => {
@@ -1006,14 +1015,21 @@ function guardarFiltros(){
 
 function aplicar(){
   const texto  = $("fBusqueda").value.trim().toUpperCase();
-  const centro = $("fCentro").value, mes = $("fMes").value, ciudad = $("fCiudad").value;
+  const centro = $("fCentro").value, ciudad = $("fCiudad").value;
   const plan   = $("fPlan").value, tramo = $("fAntiguedad").value, seg = $("fSeguimiento").value;
+  /* Rango de fechas de emisión, los dos extremos incluidos. Se puede llenar
+     solo uno. Si los escriben al revés, se entiende igual. */
+  let desde = $("fDesde").value, hasta = $("fHasta").value;
+  if (desde && hasta && desde > hasta){ const t = desde; desde = hasta; hasta = t; }
+  const ejecutivo = $("fEjecutivo").value.trim().toUpperCase();
   FILTRADOS_TODOS = DATOS.filter(r => {
     if (texto && !(r.f.toUpperCase().includes(texto) || r.p.toUpperCase().includes(texto) || r.u.toUpperCase().includes(texto))) return false;
     if (ciudad && ciudadDe(r.c) !== ciudad) return false;
     if (centro && r.c !== centro) return false;
     if (plan   && r.p !== plan)   return false;
-    if (mes    && r.d.slice(0,7) !== mes) return false;
+    if (desde  && (!r.d || r.d < desde)) return false;
+    if (hasta  && (!r.d || r.d > hasta)) return false;
+    if (ejecutivo && !r.e.toUpperCase().includes(ejecutivo)) return false;
     if (tramo !== "" && String(r.tramo) !== tramo) return false;
     if (seg && !cumpleRespaldo(r.f, seg)) return false;
     return true;
@@ -1035,7 +1051,7 @@ function pintarChips(){
     /* Si el valor ya no corresponde a ninguna opción, selectedIndex es -1.
        En ese caso se muestra el valor crudo en lugar de romper la página. */
     const opcion = el.tagName === "SELECT" ? el.options[el.selectedIndex] : null;
-    const texto = opcion ? opcion.textContent : el.value;
+    const texto = opcion ? opcion.textContent : el.type === "date" ? fechaLarga(el.value) : el.value;
     return '<span class="chip">' + ETIQUETAS[id] + ': <b>' + esc(texto) + "</b>" +
            '<button data-limpiar="' + id + '" title="Quitar">×</button></span>';
   });
@@ -1200,7 +1216,7 @@ function pintarTabla(){
         "<td>" + esc(r.c) + "</td>" +
         '<td class="mono">' + esc(r.f) + "</td>" +
         '<td class="mono">' + fechaLarga(r.d) + "</td>" +
-        '<td class="caja" title="' + esc(r.u) + '">' + esc(cajaCorta(r.u)) + "</td>" +
+        '<td class="caja">' + esc(r.e) + "</td>" +
         "<td>" + esc(r.p) + "</td>" +
         '<td class="num">' + dinero(r.v) + "</td>" +
         '<td class="num">' + dinero(r.s) + "</td>" +
