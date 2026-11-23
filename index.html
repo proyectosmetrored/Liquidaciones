@@ -134,6 +134,9 @@ tbody tr.bloqueada:hover{background:#F1F7F3}
 .btn-marcar{min-height:28px;height:auto;padding:4px 10px;font-size:11.5px;line-height:1.15;white-space:normal;background:var(--azul);color:#fff}
 .btn-marcar:hover{background:#06679F}
 .btn-marcar:disabled{background:#CBD5E1;color:#334155;opacity:1;cursor:not-allowed}
+.p-sinat{background:#FDF3E2;color:#8A5A12}
+.btn-sinat{min-height:24px;height:auto;padding:3px 8px;margin-top:5px;font-size:10.5px;line-height:1.15;white-space:normal;background:#fff;color:var(--alerta);border:1px solid #E6B3AE}
+.btn-sinat:hover{background:var(--alerta-fondo)}
 .btn-foto{height:26px;padding:0 9px;font-size:11px;background:#fff;color:var(--azul);border:1px solid var(--azul-claro);margin-top:4px}
 .btn-foto:hover{background:var(--azul-suave)}
 .resp{white-space:nowrap;font-size:12px;overflow:hidden;text-overflow:ellipsis}
@@ -190,6 +193,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .zona-pdf.encima{border-color:var(--azul);background:var(--azul-suave)}
 .zona-pdf .texto{flex:1 1 260px;min-width:0;font-size:12.5px;color:var(--tinta-2);line-height:1.5}
 .zona-pdf .texto b{color:var(--tinta);font-size:13.5px;display:block;margin-bottom:2px}
+.zona-pdf .texto b:not(:first-child){display:inline;font-size:inherit;margin:0}
 .zona-pdf .mono{font-size:11.5px;color:var(--tinta-3)}
 .resumen-pdf{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
 .pastilla{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap}
@@ -236,6 +240,136 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .obs-modal:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px var(--azul-suave)}
 
 @media (max-width:640px){.envoltura,.encabezado,.franja,.pie{padding-left:14px;padding-right:14px}}
+/* ================= Celular y tablet =================
+   Hasta 900 px de ancho (celulares y tablets en vertical) la tabla se
+   convierte en tarjetas, una por factura, con botones grandes para el dedo.
+   Las celdas son las mismas de la tabla: solo cambia cómo se acomodan, y
+   el nombre de cada dato sale de la posición de la columna.
+   Por encima de 900 px no se aplica nada de esto. */
+button{touch-action:manipulation}
+.btn-filtros,.orden-movil{display:none}
+.grid-graficos{grid-template-columns:repeat(auto-fit,minmax(min(370px,100%),1fr))}
+@media (max-width:900px){
+  .encabezado{padding:12px 14px;gap:10px 14px}
+  .encabezado .sub{display:none}
+  .encabezado h1{font-size:15px}
+  .marca{font-size:20px}
+  .encabezado .centro{min-width:0;flex:1 1 150px}
+  .corte{flex:1 1 150px;padding:6px 10px}
+  .sesion{flex:1 1 100%;justify-content:space-between}
+  .btn-salir{height:38px}
+  .franja{padding:8px 14px;font-size:11.5px}
+  .envoltura{padding:12px 14px 96px}
+  .tarjeta{padding:14px}
+  .pie{padding:12px 14px}
+
+  /* Filtros: Buscar siempre a la vista; el resto se abre con el botón. */
+  .btn-filtros{display:inline-flex;align-items:center;margin-left:auto;height:38px;padding:0 14px;text-transform:none;letter-spacing:0}
+  #tarjetaFiltros > h2{margin-bottom:10px}
+  #tarjetaFiltros > h2 .extra{display:none}
+  .filtros{grid-template-columns:1fr 1fr;gap:10px}
+  .filtros .campo:first-child,.filtros .campo:last-child{grid-column:1 / -1}
+  .filtros .campo:last-child label{display:none}
+  #tarjetaFiltros:not(.abiertos) .filtros .campo:not(:first-child){display:none}
+  .campo select,.campo input{height:44px;font-size:16px}
+  .acciones button{flex:1;height:44px}
+  .chip{font-size:12.5px;padding:6px 8px 6px 12px}
+  .chip button{height:24px;width:24px;font-size:14px}
+
+  .pestanas button{flex:1;height:44px;padding:0 8px}
+  .avance-barra{padding:12px 14px}
+  .avance-barra .sep{display:none}
+  .avance-barra .dato{flex:1 1 30%;flex-direction:column;gap:1px}
+  .avance-barra .progreso{flex:1 1 100%}
+  .avance-barra .acciones-arriba{margin-left:0;width:100%}
+  .avance-barra .acciones-arriba button{flex:1;height:44px}
+  .zona-pdf{padding:14px}
+  .zona-pdf #btnElegirPdf{flex:1 1 100%;height:46px}
+  .enlace-excel{float:none;margin:0}
+
+  /* Ordenar: en tarjetas no hay encabezados que tocar. */
+  .orden-movil{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .orden-movil label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tinta-2);white-space:nowrap}
+  .orden-movil select{flex:1;min-width:0;height:44px;padding:8px 11px;border:1px solid #CAD9E1;border-radius:7px;background:#fff;color:var(--tinta);font:inherit;font-size:16px}
+  .orden-movil button{height:44px;min-width:48px;padding:0 12px;font-size:17px}
+
+  /* La tabla de facturas pasa a tarjetas. */
+  .contenedor-tabla{border:none;border-radius:0;overflow:visible;max-height:none}
+  .contenedor-tabla table{display:block;min-width:0;table-layout:auto;font-size:13.5px}
+  .contenedor-tabla colgroup,.contenedor-tabla thead{display:none}
+  .contenedor-tabla tbody{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .contenedor-tabla tbody tr{display:flex;flex-wrap:wrap;align-content:flex-start;gap:10px 14px;padding:14px;
+    background:#fff;border:1px solid var(--azul-borde);border-radius:12px;box-shadow:var(--sombra)}
+  .contenedor-tabla tbody tr:hover{background:#fff}
+  .contenedor-tabla tbody tr.seleccionada{background:#EAF6FC;border-color:var(--azul)}
+  .contenedor-tabla tbody tr.bloqueada,.contenedor-tabla tbody tr.bloqueada:hover{background:#F7FAF8}
+  .contenedor-tabla tbody tr:has(td.vacio){grid-column:1 / -1}
+  .contenedor-tabla tbody td{display:block;flex:1 1 100%;min-width:0;padding:0;border:none;text-align:left;white-space:normal}
+  .contenedor-tabla tbody td::before{display:block;margin-bottom:2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tinta-3)}
+  .contenedor-tabla tbody td.vacio{padding:26px 8px;text-align:center}
+  .contenedor-tabla tbody td.vacio::before{content:none}
+  .contenedor-tabla tbody td:nth-child(1){order:2;flex:0 0 auto}
+  .contenedor-tabla tbody td:nth-child(1):empty{display:none}
+  .contenedor-tabla tbody td:nth-child(3){order:1;flex:1 1 60%;font-size:16.5px;font-weight:700;color:var(--azul);white-space:normal}
+  .contenedor-tabla tbody td:nth-child(n+2):not(:nth-child(3)){order:3}
+  .contenedor-tabla tbody td:nth-child(2){flex:1 1 52%}
+  .contenedor-tabla tbody td:nth-child(4){flex:1 1 34%}
+  .contenedor-tabla tbody td:nth-child(7),.contenedor-tabla tbody td:nth-child(8),.contenedor-tabla tbody td:nth-child(9){flex:1 1 27%}
+  .contenedor-tabla tbody td:nth-child(2)::before{content:"Centro"}
+  .contenedor-tabla tbody td:nth-child(3)::before{content:"Factura"}
+  .contenedor-tabla tbody td:nth-child(4)::before{content:"Fecha"}
+  .contenedor-tabla tbody td:nth-child(5)::before{content:"Ejecutivo"}
+  .contenedor-tabla tbody td:nth-child(6)::before{content:"Plan / Convenio"}
+  .contenedor-tabla tbody td:nth-child(7)::before{content:"Valor"}
+  .contenedor-tabla tbody td:nth-child(8)::before{content:"Saldo"}
+  .contenedor-tabla tbody td:nth-child(9)::before{content:"Antigüedad"}
+  .contenedor-tabla tbody td:nth-child(10)::before{content:"Respaldo"}
+  .contenedor-tabla tbody td:nth-child(11)::before{content:"Gestión"}
+  .contenedor-tabla tbody td:nth-child(12)::before{content:"Observación"}
+  .contenedor-tabla tbody td:nth-child(10),.contenedor-tabla tbody td:nth-child(11){padding-top:10px;border-top:1px solid var(--linea)}
+  .contenedor-tabla td.caja{font-size:13.5px}
+  .contenedor-tabla .chk{width:26px;height:26px}
+  .contenedor-tabla .resp{overflow:visible;font-size:13.5px}
+  .contenedor-tabla .resp a{display:inline-block;padding:4px 0}
+  .contenedor-tabla .sello{font-size:11.5px}
+  .contenedor-tabla .pastilla{font-size:12px;padding:5px 11px}
+  .contenedor-tabla .btn-foto{height:42px;padding:0 16px;font-size:13.5px;margin-top:8px}
+  .contenedor-tabla td:nth-child(11) > br{display:none}
+  .contenedor-tabla .btn-marcar{display:block;width:100%;min-height:48px;font-size:15px}
+  .contenedor-tabla .btn-sinat{display:block;width:100%;min-height:44px;margin-top:8px;font-size:13.5px}
+  .contenedor-tabla .obs{height:44px;font-size:16px}
+  .contenedor-tabla .obs-fija{font-size:13.5px}
+
+  /* Entregar varias: la barra se queda pegada abajo mientras haya selección. */
+  .lote{position:fixed;left:0;right:0;bottom:0;z-index:50;margin:0;border-radius:0;border-width:1px 0 0;
+    padding:10px 14px;gap:8px;background:#fff;box-shadow:0 -4px 14px rgba(41,90,116,.16)}
+  .lote b{flex:1 1 100%}
+  .lote button{flex:1;height:42px;padding:0 8px}
+
+  .paginacion{flex-direction:column;align-items:stretch}
+  .paginacion .grupo{justify-content:space-between}
+  .paginacion button{height:42px}
+  #tablaCentros{min-width:660px}
+}
+@media (max-width:520px){
+  .filtros .campo{grid-column:1 / -1}
+  .filtros .campo.medio{grid-column:auto}
+  .kpis{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{padding:12px}
+  .kpi p{font-size:19px}
+  .avance-barra .dato{flex:1 1 45%}
+  #btnPrimera,#btnUltima{display:none}
+  .contenedor-tabla tbody{grid-template-columns:1fr}
+}
+/* Ventanas de confirmación a pantalla completa en el celular. */
+@media (max-width:640px){
+  .velo{padding:0;align-items:stretch}
+  .modal{max-width:none;border-radius:0;display:flex;flex-direction:column;max-height:100vh;max-height:100dvh}
+  .modal-cuerpo{flex:1 1 auto;overflow:auto;-webkit-overflow-scrolling:touch}
+  .modal-pie{padding:12px 16px 16px;border-top:1px solid var(--linea)}
+  .modal-pie button{flex:1;height:48px;font-size:14.5px}
+  .obs-modal{font-size:16px}
+}
 @media print{.filtros,.acciones,.acciones-arriba,.paginacion,.franja,.pestanas,.lote,.sesion{display:none}.contenedor-tabla{max-height:none}}
 .enlace-excel{float:right;font-size:.82rem;font-weight:600;color:#1f6f43;text-decoration:none;
   border:1px solid #bfe3cc;background:#eef9f1;border-radius:8px;padding:4px 10px;margin-top:2px}
@@ -302,15 +436,16 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
 <div class="envoltura oculto" id="cuerpoApp">
 
-  <section class="tarjeta" style="padding-bottom:14px">
-    <h2>Filtros <span class="extra">Los indicadores y los gráficos responden a lo que filtre aquí</span></h2>
+  <section class="tarjeta" id="tarjetaFiltros" style="padding-bottom:14px">
+    <h2>Filtros <span class="extra">Los indicadores y los gráficos responden a lo que filtre aquí</span>
+      <button type="button" class="btn-2 btn-filtros" id="btnFiltros" aria-expanded="false">Más filtros ▾</button></h2>
     <div class="filtros">
       <div class="campo"><label for="fBusqueda">Buscar</label>
         <input type="text" id="fBusqueda" placeholder="Factura, convenio, ejecutivo…" autocomplete="off"></div>
       <div class="campo oculto" id="campoCiudad"><label for="fCiudad">Ciudad</label><select id="fCiudad"></select></div>
       <div class="campo oculto" id="campoCentro"><label for="fCentro">Centro</label><select id="fCentro"></select></div>
-      <div class="campo"><label for="fDesde">Fecha desde</label><input type="date" id="fDesde"></div>
-      <div class="campo"><label for="fHasta">Fecha hasta</label><input type="date" id="fHasta"></div>
+      <div class="campo medio"><label for="fDesde">Fecha desde</label><input type="date" id="fDesde"></div>
+      <div class="campo medio"><label for="fHasta">Fecha hasta</label><input type="date" id="fHasta"></div>
       <div class="campo"><label for="fEjecutivo">Ejecutivo</label>
         <input type="text" id="fEjecutivo" list="listaEjecutivos" placeholder="Todos · escribe un nombre" autocomplete="off">
         <datalist id="listaEjecutivos"></datalist></div>
@@ -329,6 +464,11 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         <option value="pdfsinfoto">Con PDF, sin foto</option>
         <option value="fotosinpdf">Con foto, sin PDF</option>
         <option value="nada">Sin PDF ni foto</option></select></div>
+      <div class="campo oculto" id="campoEstado"><label for="fEstado">Estado</label><select id="fEstado">
+        <option value="">Todas</option>
+        <option value="entregada">Entregadas</option>
+        <option value="sinatencion">Sin atención</option>
+        <option value="excel">Liquidadas por Administración</option></select></div>
       <div class="campo"><label>&nbsp;</label>
         <div class="acciones">
           <button class="btn-2" id="btnLimpiar">Limpiar</button>
@@ -344,6 +484,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     <div class="dato"><span>Cartera</span><b id="cTotal">0</b></div>
     <div class="sep"></div>
     <div class="dato"><span>Liquidadas</span><b id="cMarcadas">0</b></div>
+    <div class="sep"></div>
+    <div class="dato"><span>Sin atención</span><b id="cSinAt">0</b></div>
     <div class="sep"></div>
     <div class="dato"><span>Pendientes</span><b id="cSinMarcar">0</b></div>
     <div class="sep"></div>
@@ -378,7 +520,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
   <p class="nota-regla" id="notaRegla"><b>Para entregar una factura hace falta su PDF.</b> El robot los carga cada
   noche desde EC Datos; si falta alguno, adjúntalo aquí o toma una foto desde la fila. La entrega queda
-  guardada en SharePoint a nombre de quien la registra y <b>no se puede corregir ni borrar</b> — revisa antes de confirmar.</p>
+  guardada en SharePoint a nombre de quien la registra y <b>no se puede corregir ni borrar</b> — revisa antes de confirmar.
+  Si la factura se emitió pero <b>la atención no se realizó</b>, usa <b>Sin atención</b> y escribe el motivo: tampoco se puede deshacer.</p>
 
   <div class="pestanas" id="pestanas">
     <button class="activa" data-vista="detalle">Pendientes</button>
@@ -398,6 +541,12 @@ svg{display:block;width:100%;height:auto;overflow:visible}
             <button class="btn-1" id="btnLoteMarcar">Entregar seleccionadas…</button>
             <button class="btn-2" id="btnLoteObs">Anotar en todas…</button>
             <button class="btn-2" id="btnLoteLimpiar">Deseleccionar</button>
+          </div>
+
+          <div class="orden-movil">
+            <label for="ordenMovil">Ordenar por</label>
+            <select id="ordenMovil"></select>
+            <button type="button" class="btn-2" id="btnOrdenSentido" title="Cambiar el sentido del orden">↑</button>
           </div>
 
           <div class="contenedor-tabla">
@@ -877,6 +1026,7 @@ async function abrirApp(){
   $("vistaAnalisis").classList.add("oculto");
   $("notaRegla").classList.remove("oculto");
   $("campoSeguimiento").classList.remove("oculto");
+  $("campoEstado").classList.add("oculto");
   $("enlaceLiquidado").classList.add("oculto");
   await cargarDatos();
 }
@@ -928,6 +1078,7 @@ async function cargarDatos(){
     const f = String(m.factura || m.Title || "").trim().toUpperCase();
     if (f) MARCAS[f] = {centro: m.centro || "", obs: m.observacion || "",
                         por: m.marcadoPor || m.centro || "", en: m.marcadoEn || "",
+                        tipo: tipoMarca(m.tipo),
                         pdf: enlaceMarca(m.id, m.respaldo)};
   });
 
@@ -964,9 +1115,9 @@ async function cargarDatos(){
 
 /* ========================= Filtros ========================= */
 const POR_PAGINA = 100;
-const CAMPOS = ["fBusqueda","fCiudad","fCentro","fDesde","fHasta","fEjecutivo","fPlan","fAntiguedad","fSeguimiento"];
+const CAMPOS = ["fBusqueda","fCiudad","fCentro","fDesde","fHasta","fEjecutivo","fPlan","fAntiguedad","fSeguimiento","fEstado"];
 const ETIQUETAS = {fBusqueda:"Búsqueda", fCiudad:"Ciudad", fCentro:"Centro", fDesde:"Desde", fHasta:"Hasta",
-                   fEjecutivo:"Ejecutivo", fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Respaldo"};
+                   fEjecutivo:"Ejecutivo", fPlan:"Plan", fAntiguedad:"Antigüedad", fSeguimiento:"Respaldo", fEstado:"Estado"};
 const CLAVE_FILTROS = "autoconsumos.filtros.v5";
 let filtrados = [], pagina = 1, orden = {col:"dias", asc:false};
 /* Pestaña activa: "detalle" (pendientes), "liquidadas" o "analisis".
@@ -978,6 +1129,11 @@ const enLiquidadas = () => VISTA === "liquidadas";
 /* Liquidada = entregada en el tablero (marca) o cerrada por Administración
    en la hoja LIQUIDADO del Excel base (lx). Entregar equivale a liquidar. */
 const liquidada = r => !!(MARCAS[r.f] || r.lx);
+/* Sin atención: la factura se emitió pero la atención no se realizó. La
+   registra el centro con un motivo obligatorio, es tan definitiva como la
+   entrega y también saca la factura de Pendientes; se cuenta aparte. */
+const sinAtencion = r => !!(MARCAS[r.f] && MARCAS[r.f].tipo === "SIN_ATENCION");
+const tipoMarca = t => String(t || "").trim().toUpperCase() === "SIN_ATENCION" ? "SIN_ATENCION" : "";
 const seleccion = new Set();
 
 const unicos = campo => [...new Set(DATOS.map(r => r[campo]).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
@@ -995,7 +1151,7 @@ function inicializarFiltros(){
   ["fDesde","fHasta"].forEach(id => {
     $(id).min = fechas[0] || ""; $(id).max = fechas[fechas.length-1] || "";
   });
-  $("listaEjecutivos").innerHTML = unicos("e").map(n => '<option value="' + esc(n) + '">').join("");
+  FIRMA_EJECUTIVOS = null;
   try {
     const guardados = JSON.parse(localStorage.getItem(CLAVE_FILTROS) || "{}");
     CAMPOS.forEach(id => {
@@ -1013,6 +1169,25 @@ function guardarFiltros(){
   try { localStorage.setItem(CLAVE_FILTROS, JSON.stringify(estado)); } catch(e){}
 }
 
+/* Lista del filtro Ejecutivo: solo quienes tienen facturas en lo que se está
+   mirando (pestaña, ciudad y centro elegidos). Así no salen nombres de otros
+   centros ni de facturas antiguas ya cerradas cuando se ven las pendientes. */
+let FIRMA_EJECUTIVOS = null;
+function llenarEjecutivos(centro, ciudad){
+  const liq = enLiquidadas(), firma = [liq, centro, ciudad, DATOS.length, Object.keys(MARCAS).length].join("|");
+  if (firma === FIRMA_EJECUTIVOS) return;
+  FIRMA_EJECUTIVOS = firma;
+  const nombres = new Set();
+  DATOS.forEach(r => {
+    if (!r.e || liquidada(r) !== liq) return;
+    if (ciudad && ciudadDe(r.c) !== ciudad) return;
+    if (centro && r.c !== centro) return;
+    nombres.add(r.e);
+  });
+  $("listaEjecutivos").innerHTML = [...nombres].sort((a,b) => a.localeCompare(b,"es"))
+    .map(n => '<option value="' + esc(n) + '">').join("");
+}
+
 function aplicar(){
   const texto  = $("fBusqueda").value.trim().toUpperCase();
   const centro = $("fCentro").value, ciudad = $("fCiudad").value;
@@ -1022,6 +1197,7 @@ function aplicar(){
   let desde = $("fDesde").value, hasta = $("fHasta").value;
   if (desde && hasta && desde > hasta){ const t = desde; desde = hasta; hasta = t; }
   const ejecutivo = $("fEjecutivo").value.trim().toUpperCase();
+  llenarEjecutivos(centro, ciudad);
   FILTRADOS_TODOS = DATOS.filter(r => {
     if (texto && !(r.f.toUpperCase().includes(texto) || r.p.toUpperCase().includes(texto) || r.u.toUpperCase().includes(texto))) return false;
     if (ciudad && ciudadDe(r.c) !== ciudad) return false;
@@ -1035,7 +1211,17 @@ function aplicar(){
     return true;
   });
   const liq = enLiquidadas();
-  filtrados = FILTRADOS_TODOS.filter(r => liq ? liquidada(r) : !liquidada(r));
+  /* El filtro Estado solo existe en Liquidadas: separa las entregadas, las
+     «sin atención» y las que cerró Administración en el Excel base. */
+  const estado = liq ? $("fEstado").value : "";
+  filtrados = FILTRADOS_TODOS.filter(r => {
+    if (!liq) return !liquidada(r);
+    if (!liquidada(r)) return false;
+    if (estado === "sinatencion") return sinAtencion(r);
+    if (estado === "entregada")   return !!MARCAS[r.f] && !sinAtencion(r);
+    if (estado === "excel")       return !MARCAS[r.f] && !!r.lx;
+    return true;
+  });
   ordenar();
   pagina = 1;
   guardarFiltros();
@@ -1055,6 +1241,10 @@ function pintarChips(){
     return '<span class="chip">' + ETIQUETAS[id] + ': <b>' + esc(texto) + "</b>" +
            '<button data-limpiar="' + id + '" title="Quitar">×</button></span>';
   });
+  const puestos = CAMPOS.filter(id => id !== "fBusqueda" && !$(id).closest(".campo").classList.contains("oculto") && $(id).value).length;
+  const abiertos = $("tarjetaFiltros").classList.contains("abiertos");
+  $("btnFiltros").textContent = (abiertos ? "Ocultar filtros ▴" : "Más filtros" + (puestos ? " (" + puestos + ")" : "") + " ▾");
+  $("btnFiltros").setAttribute("aria-expanded", abiertos ? "true" : "false");
   $("chips").innerHTML = activos.length
     ? activos.join("") + '<span class="chip" style="background:#fff"><b>' + entero(filtrados.length) + "</b> resultado(s)</span>"
     : "";
@@ -1077,7 +1267,8 @@ function pintarKpis(){
   const pend  = pendientes.reduce((a,r) => a + r.s, 0);
   const valor = pendientes.reduce((a,r) => a + r.v, 0);
   const viejo = pendientes.filter(r => r.tramo === 3).reduce((a,r)=>a+r.s,0);
-  const marcadas = todos.length - total;
+  const sinAt = todos.filter(sinAtencion).length;
+  const marcadas = todos.length - total - sinAt;
   const pct = todos.length ? marcadas/todos.length*100 : 0;
   const dias = total ? pendientes.reduce((a,r)=>a+r.dias,0)/total : 0;
   const filtrando = todos.length !== DATOS.length;
@@ -1093,7 +1284,9 @@ function pintarKpis(){
     ["Antigüedad promedio", Math.round(dias) + " días",
       "Desde la emisión hasta el corte", dias > 90, null],
     ["Liquidadas", entero(marcadas),
-      pct.toFixed(1) + "% de lo consultado", false, pct]
+      pct.toFixed(1) + "% de lo consultado", false, pct],
+    ["Sin atención", entero(sinAt),
+      "Facturadas sin que se realizara la atención", false, null]
   ];
   $("kpis").innerHTML = tarjetas.map(([t,v,p,rojo,barra]) =>
     '<article class="kpi' + (rojo?" rojo":"") + '"><h3>' + t + "</h3><p>" + v + '</p><p class="pie-kpi">' + p + "</p>" +
@@ -1101,9 +1294,11 @@ function pintarKpis(){
 }
 
 function actualizarContadores(){
-  const marcadas = DATOS.filter(liquidada).length;
+  const marcadas = DATOS.filter(liquidada).length;      // todo lo que ya salió de Pendientes
+  const sinAt = DATOS.filter(sinAtencion).length;
   $("cTotal").textContent     = entero(DATOS.length);
-  $("cMarcadas").textContent  = entero(marcadas);
+  $("cMarcadas").textContent  = entero(marcadas - sinAt);
+  $("cSinAt").textContent     = entero(sinAt);
   $("cSinMarcar").textContent = entero(DATOS.length - marcadas);
   $("cConPdf").textContent    = entero(DATOS.filter(r => !liquidada(r) && pdfDe(r.f)).length);
   /* Sobre la cartera completa, no sobre lo filtrado: el avance de una
@@ -1129,6 +1324,7 @@ function cambiarVista(vista){
      El filtro Respaldo se queda: todas tienen PDF, pero sirve por foto. */
   $("zonaPdf").classList.toggle("oculto", liq || !CONFIG.SUBIR_URL || !puedeAdjuntar());
   $("notaRegla").classList.toggle("oculto", liq);
+  $("campoEstado").classList.toggle("oculto", !liq);
   /* El Excel LIQUIDADO lo ven ADMIN y OPERACIONES desde la pestaña Liquidadas. */
   const verExcel = liq && vistaAmplia() && !!CONFIG.RUTA_LIQUIDADO;
   $("enlaceLiquidado").classList.toggle("oculto", !verExcel);
@@ -1187,8 +1383,12 @@ function pintarTabla(){
         ? ' <a class="adjunto" href="' + esc(marca.pdf) + '" target="_blank" ' +
           'rel="noopener noreferrer" title="Ver el respaldo en PDF">📎</a>' : "";
 
+      const botonSinAt = '<br><button class="btn-sinat" data-sinat="' + esc(r.f) +
+        '" title="La factura se emitió pero la atención no se realizó">Sin atención</button>';
       const celdaGestion = marca
-        ? '<span class="pastilla p-ok">🔒 Entregada</span>' + adjunto +
+        ? (marca.tipo === "SIN_ATENCION"
+            ? '<span class="pastilla p-sinat">✖ Sin atención</span>'
+            : '<span class="pastilla p-ok">🔒 Entregada</span>') + adjunto +
           '<span class="sello">' + esc(marca.por || marca.centro) +
           (marca.en ? "<br>" + esc(selloLegible(marca.en)) : "") + "</span>"
         : r.lx
@@ -1197,8 +1397,8 @@ function pintarTabla(){
         : !puedeEntregar()
           ? '<span class="pastilla p-no">Pendiente</span>'
           : pdf
-            ? '<button class="btn-marcar" data-marcar="' + esc(r.f) + '">Entregar</button>'
-            : '<button class="btn-marcar" disabled title="Adjunta el PDF para poder entregar">Falta el PDF</button>';
+            ? '<button class="btn-marcar" data-marcar="' + esc(r.f) + '">Entregar</button>' + botonSinAt
+            : '<button class="btn-marcar" disabled title="Adjunta el PDF para poder entregar">Falta el PDF</button>' + botonSinAt;
 
       const celdaObs = marca
         ? '<span class="obs-fija' + (marca.obs ? "" : " sin") + '">' + esc(marca.obs || "Sin observación") + "</span>"
@@ -1244,6 +1444,8 @@ function pintarTabla(){
     th.classList.toggle("orden-activo", activo);
     th.querySelector(".flecha").textContent = activo ? (orden.asc ? "↑" : "↓") : "↕";
   });
+  $("ordenMovil").value = orden.col;
+  $("btnOrdenSentido").textContent = orden.asc ? "↑" : "↓";
 }
 
 function pintarLote(){
@@ -1270,6 +1472,8 @@ function conectarTabla(){
   cuerpo.addEventListener("click", ev => {
     const b = ev.target.closest("[data-marcar]");
     if (b){ pedirConfirmacion([b.dataset.marcar]); return; }
+    const sa = ev.target.closest("[data-sinat]");
+    if (sa){ pedirSinAtencion(sa.dataset.sinat); return; }
     const fo = ev.target.closest("[data-foto]");
     if (fo) pedirFoto(fo.dataset.foto);
   });
@@ -1278,6 +1482,12 @@ function conectarTabla(){
     orden = {col, asc: orden.col === col ? !orden.asc : true};
     ordenar(); pintarTabla();
   });
+  /* En celular la tabla son tarjetas y no hay encabezados: se ordena con
+     esta lista, que ofrece las mismas columnas. */
+  $("ordenMovil").innerHTML = [...document.querySelectorAll("thead th.ordenable")].map(th =>
+    '<option value="' + th.dataset.col + '">' + esc(th.firstChild.textContent.trim()) + "</option>").join("");
+  $("ordenMovil").onchange = ev => { orden = {col: ev.target.value, asc: true}; ordenar(); pintarTabla(); };
+  $("btnOrdenSentido").onclick = () => { orden = {col: orden.col, asc: !orden.asc}; ordenar(); pintarTabla(); };
   $("chkTodas").onchange = ev => {
     const desde = (pagina-1)*POR_PAGINA;
     filtrados.slice(desde, desde+POR_PAGINA)
@@ -1369,7 +1579,7 @@ async function confirmarMarca(facturas){
     const f = String(g.factura || "").trim().toUpperCase();
     if (!f) return;
     MARCAS[f] = {centro: g.centro || SESION.centro, obs: g.observacion || BORRADORES[f] || "",
-                 por: g.marcadoPor || quienSoy(), en: g.marcadoEn || ""};
+                 por: g.marcadoPor || quienSoy(), en: g.marcadoEn || "", tipo: tipoMarca(g.tipo)};
     delete BORRADORES[f];
     seleccion.delete(f);
   });
@@ -1384,7 +1594,7 @@ async function confirmarMarca(facturas){
     if (x.motivo === "ya_marcada"){
       yaMarcadas++;
       MARCAS[f] = {centro: x.centro || "", obs: x.observacion || "",
-                   por: x.marcadoPor || x.centro || "", en: x.marcadoEn || ""};
+                   por: x.marcadoPor || x.centro || "", en: x.marcadoEn || "", tipo: tipoMarca(x.tipo)};
     } else if (x.motivo === "sin_pdf"){
       sinPdf++;
       if (RESPALDOS[f]) RESPALDOS[f].pdf = null;   // el tablero estaba desactualizado
@@ -1403,6 +1613,98 @@ async function confirmarMarca(facturas){
   else
     avisoPanel("No se entregó ninguna: " + (partes.join(", ") || "sin detalle") + ".", false);
 
+  actualizarContadores();
+  aplicar();
+}
+
+/* ===================== Sin atención =====================
+   La factura se emitió pero la atención no se realizó. Es una respuesta
+   del centro sobre esa factura: va una por una, exige el motivo, no exige
+   PDF (si el robot ya lo bajó, se queda como respaldo) y es tan definitiva
+   como la entrega. Usa el mismo flujo «Marcar facturas», con
+   tipo = SIN_ATENCION.                                                  */
+const MIN_MOTIVO = 5;
+
+function pedirSinAtencion(f){
+  if (!puedeEntregar()){ avisoPanel("Tu usuario solo puede consultar.", false); return; }
+  const r = DATOS.find(x => x.f === f);
+  if (!r){ avisoPanel("Esa factura no está en tu cartera.", false); return; }
+  if (liquidada(r)){ avisoPanel("Esa factura ya está registrada: no se puede cambiar.", false); return; }
+
+  $("zonaModal").innerHTML =
+    '<div class="velo" id="velo"><div class="modal">' +
+      '<div class="modal-cabeza"><h3>⚠ Factura sin atención</h3></div>' +
+      '<div class="modal-cuerpo">' +
+        "<p>Vas a reportar que esta factura <b>se emitió pero la atención no se realizó</b>.</p>" +
+        '<div class="modal-lista"><div><b>' + esc(r.f) + "</b><span>" + esc(r.c) + " · " + fechaLarga(r.d) +
+          " · " + dinero(r.v) + (r.e ? " · " + esc(r.e) : "") + "</span></div></div>" +
+        '<label class="campo-obs" for="obsSinAt">Motivo <i>(obligatorio)</i></label>' +
+        '<textarea class="obs-modal" id="obsSinAt" rows="3" maxlength="300" ' +
+          'placeholder="Qué pasó: por qué no se realizó la atención…">' + esc(BORRADORES[f] || "") + "</textarea>" +
+        '<p class="subrayado" style="margin-top:14px">Esta acción no se puede deshacer. La factura sale de ' +
+        "Pendientes y queda como «Sin atención» a nombre de <b>" + esc(quienSoy()) + "</b>, con la fecha y la hora del servidor.</p>" +
+      "</div>" +
+      '<div class="modal-pie">' +
+        '<button class="btn-2" id="btnCancelarSinAt">Cancelar</button>' +
+        '<button class="btn-peligro" id="btnConfirmarSinAt" disabled>Sí, registrar sin atención</button>' +
+      "</div>" +
+    "</div></div>";
+
+  const caja = $("obsSinAt"), btn = $("btnConfirmarSinAt");
+  const revisar = () => { btn.disabled = caja.value.trim().length < MIN_MOTIVO; };
+  caja.addEventListener("input", revisar); revisar();
+  try { caja.focus(); } catch(e){}
+  $("btnCancelarSinAt").onclick = cerrarModal;
+  $("velo").addEventListener("click", ev => { if (ev.target.id === "velo") cerrarModal(); });
+  btn.onclick = () => confirmarSinAtencion(f, caja.value.trim());
+}
+
+async function confirmarSinAtencion(f, motivo){
+  if (motivo.length < MIN_MOTIVO){ avisoPanel("Escribe el motivo antes de registrar.", false); return; }
+  const btn = $("btnConfirmarSinAt");
+  if (btn){ btn.disabled = true; btn.textContent = "Registrando…"; $("btnCancelarSinAt").disabled = true; }
+
+  const carga = [{factura: f, observacion: motivo, tipo: "SIN_ATENCION"}];
+  let data;
+  try {
+    data = CONFIG.MODO_DEMO ? demoMarcar(carga)
+                            : await llamar(CONFIG.MARCAR_URL, {token: SESION.token, facturas: carga}, 2);
+  } catch(e){
+    cerrarModal();
+    avisoPanel("No se pudo registrar: falló la conexión. La factura sigue pendiente.", false);
+    return;
+  }
+
+  cerrarModal();
+  if (sesionCaida(data)) return;
+  if (!data || !data.ok){
+    avisoPanel(data && data.motivo === "sin_permiso"
+      ? "Tu usuario no puede registrar facturas."
+      : (data && data.mensaje) || "El servidor rechazó el registro. La factura sigue pendiente.", false);
+    return;
+  }
+
+  const g = (data.grabadas || [])[0], x = (data.rechazadas || [])[0];
+  if (g){
+    MARCAS[f] = {centro: g.centro || SESION.centro, obs: g.observacion || motivo,
+                 por: g.marcadoPor || quienSoy(), en: g.marcadoEn || "", tipo: tipoMarca(g.tipo)};
+    delete BORRADORES[f]; seleccion.delete(f);
+    if (MARCAS[f].tipo === "SIN_ATENCION")
+      avisoPanel("La factura " + f + " quedó registrada como «Sin atención». Ya está en la pestaña Liquidadas.", true);
+    else   /* el flujo guardó una entrega normal: es una versión anterior a este botón */
+      avisoPanel("La factura " + f + " se registró, pero el servidor no la guardó como «Sin atención». Avisa a Tecnología.", false);
+  } else if (x && x.motivo === "ya_marcada"){
+    MARCAS[f] = {centro: x.centro || "", obs: x.observacion || "",
+                 por: x.marcadoPor || x.centro || "", en: x.marcadoEn || "", tipo: tipoMarca(x.tipo)};
+    avisoPanel("No se registró: la factura " + f + " ya la había registrado " + (MARCAS[f].por || "otra persona") + ".", false);
+  } else {
+    const porque = !x ? "el servidor no respondió por esa factura"
+      : x.motivo === "sin_observacion" ? "falta el motivo"
+      : x.motivo === "fuera_de_cartera" ? "no está en tu cartera"
+      : x.motivo === "sin_pdf" ? "el servidor todavía exige PDF (avisa a Tecnología)"
+      : (x.motivo || "sin detalle");
+    avisoPanel("No se registró la factura " + f + ": " + porque + ".", false);
+  }
   actualizarContadores();
   aplicar();
 }
@@ -1910,9 +2212,11 @@ function pintarAnalisis(){
     "var(--serie-1)", compacto,
     s => "<b>" + s.etiqueta + "</b><br>Pendiente: " + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
 
-  const marcadas = todos.filter(liquidada);
+  const marcadas = todos.filter(r => liquidada(r) && !sinAtencion(r));
+  const sinAt = todos.filter(sinAtencion);
   barras("gAvance", [
     {etiqueta:"Liquidadas", valor: marcadas.reduce((a,r)=>a+r.s,0), n: marcadas.length},
+    {etiqueta:"Sin atención", valor: sinAt.reduce((a,r)=>a+r.s,0), n: sinAt.length},
     {etiqueta:"Pendientes", valor: totalPend, n: filtrados.length}
   ], "var(--serie-1)", compacto,
     s => "<b>" + s.etiqueta + "</b><br>" + dinero(s.valor) + "<br>" + entero(s.n) + " factura(s)");
@@ -1925,12 +2229,13 @@ function pintarAnalisis(){
             pend: pend.reduce((a,r)=>a+r.s,0),
             viejo: pend.filter(r=>r.tramo===3).reduce((a,r)=>a+r.s,0),
             conPdf: pend.filter(r => pdfDe(r.f)).length,
-            marcadas: filas.filter(liquidada).length};
+            sinAt: filas.filter(sinAtencion).length,
+            marcadas: filas.filter(r => liquidada(r) && !sinAtencion(r)).length};
   }).sort((a,b) => b.pend - a.pend);
 
   $("tablaCentros").innerHTML =
     "<thead><tr><th>Centro</th><th class='num'>Facturas</th><th class='num'>Pendiente</th>" +
-    "<th class='num'>&gt; 90 días</th><th class='num'>Pendientes con PDF</th><th class='num'>Liquidadas</th><th class='num'>% avance</th></tr></thead><tbody>" +
+    "<th class='num'>&gt; 90 días</th><th class='num'>Pendientes con PDF</th><th class='num'>Liquidadas</th><th class='num'>Sin atención</th><th class='num'>% avance</th></tr></thead><tbody>" +
     (porCentro.length ? porCentro.map(c =>
       "<tr><td><b>" + esc(c.centro) + "</b></td>" +
       "<td class='num'>" + entero(c.total) + "</td>" +
@@ -1938,8 +2243,9 @@ function pintarAnalisis(){
       "<td class='num'>" + dinero(c.viejo) + "</td>" +
       "<td class='num'>" + entero(c.conPdf) + "</td>" +
       "<td class='num'>" + entero(c.marcadas) + " / " + entero(c.total) + "</td>" +
-      "<td class='num'>" + (c.total ? (c.marcadas/c.total*100).toFixed(1) : "0.0") + "%</td></tr>").join("")
-      : "<tr><td colspan='7' class='vacio'>Sin datos.</td></tr>") + "</tbody>";
+      "<td class='num'>" + entero(c.sinAt) + "</td>" +
+      "<td class='num'>" + (c.total ? ((c.marcadas + c.sinAt)/c.total*100).toFixed(1) : "0.0") + "%</td></tr>").join("")
+      : "<tr><td colspan='8' class='vacio'>Sin datos.</td></tr>") + "</tbody>";
 }
 
 /* ========================= Descargas (CSV, sin librerías) ========================= */
@@ -1947,10 +2253,11 @@ const COLUMNAS = ["Centro","Número factura","Fecha","Caja","Plan | Convenio","V
                   "Días","PDF","Origen PDF","Fotos","Liquidada","Liquidada en","Entregada por","Entregada el","Observación"];
 function aFila(r){
   const m = MARCAS[r.f], p = pdfDe(r.f);
-  const donde = m && r.lx ? "Tablero y Excel base" : m ? "Tablero" : r.lx ? "Excel base" : "";
+  const sa = sinAtencion(r);
+  const donde = sa ? "Sin atención" : m && r.lx ? "Tablero y Excel base" : m ? "Tablero" : r.lx ? "Excel base" : "";
   return [r.c, r.f, fechaLarga(r.d), r.u, r.p, r.v.toFixed(2), r.s.toFixed(2), r.dias,
           p ? "SI" : "NO", p ? p.o : "", fotosDe(r.f).length,
-          liquidada(r) ? "SI" : "NO", donde, m ? (m.por || m.centro) : "", m ? selloLegible(m.en) : "", m ? m.obs : ""];
+          sa ? "SIN ATENCION" : liquidada(r) ? "SI" : "NO", donde, m ? (m.por || m.centro) : "", m ? selloLegible(m.en) : "", m ? m.obs : ""];
 }
 function descargarCsv(filas, nombre){
   /* La descarga es solo de ADMIN. Los botones ya están ocultos para los
@@ -2010,6 +2317,7 @@ function conectarControles(){
   $("btnSalir").onclick = () => salir();
 
   CAMPOS.forEach(id => $(id).addEventListener(id === "fBusqueda" ? "input" : "change", aplicar));
+  $("btnFiltros").onclick = () => { $("tarjetaFiltros").classList.toggle("abiertos"); pintarChips(); };
   $("btnLimpiar").onclick  = () => { CAMPOS.forEach(id => $(id).value = ""); aplicar(); };
   $("btnRecargar").onclick = () => cargarDatos();
 
@@ -2149,7 +2457,7 @@ function demoMarcar(carga){
       rechazadas.push({factura: f, motivo: "ya_marcada", centro: m.centro,
                        observacion: m.observacion, marcadoPor: m.marcadoPor, marcadoEn: m.marcadoEn});
     } else {
-      const nuevo = {factura: f, centro: SESION.centro, observacion: x.observacion,
+      const nuevo = {factura: f, centro: SESION.centro, observacion: x.observacion, tipo: x.tipo || "ENTREGADA",
                      marcadoPor: SESION.centro, marcadoEn: new Date().toISOString()};
       demoMarcas.push(nuevo);
       grabadas.push(nuevo);
